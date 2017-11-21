@@ -24,6 +24,7 @@ public class MachineConnectorResource {
     }
 
     @GET
+    @Path("getMachineStatus")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getMachineConnectionStatus(@QueryParam("connectionId") String connectionId)throws Exception{
         return connectorService.getMachineConnectionStatus(connectionId);

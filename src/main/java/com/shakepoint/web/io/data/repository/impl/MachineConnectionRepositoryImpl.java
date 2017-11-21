@@ -29,7 +29,7 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     @Override
     public MachineConnection getConnectionById(String id) {
         try{
-            return (MachineConnection)em.createQuery("SELECT mc FROM MachineConnection mc WHERE mc.id = :d")
+            return (MachineConnection)em.createQuery("SELECT mc FROM MachineConnection mc WHERE mc.id = :id")
                     .setParameter("id", id)
                     .getSingleResult();
         }catch(NoResultException ex){

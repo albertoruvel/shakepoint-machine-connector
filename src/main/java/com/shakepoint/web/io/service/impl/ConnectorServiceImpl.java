@@ -21,6 +21,7 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
+import java.net.BindException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -48,6 +49,17 @@ public class ConnectorServiceImpl implements ConnectorService {
         createConnections(connections);
     }
 
+    @PreDestroy
+    public void destroy() {
+        try {
+            for (ChannelFuture channel : openConnections) {
+                channel.channel().close();
+            }
+        } catch (Exception ex) {
+            log.error("Could not close connection", ex);
+        }
+    }
+
 
     private void createConnections(List<MachineConnection> connections) {
         NioEventLoopGroup acceptorGroup;
@@ -64,6 +76,8 @@ public class ConnectorServiceImpl implements ConnectorService {
             }
         } catch (InterruptedException ex) {
             log.error("Interrupted while creating netty bootstrap", ex);
+        } catch (Exception ex) {
+            log.error("Unexpected error", ex);
         }
     }
 
@@ -121,10 +135,10 @@ public class ConnectorServiceImpl implements ConnectorService {
 
     @Override
     public Response getMachineConnectionStatus(String connectionId) throws Exception {
-        MachineConnection connection = repository.getConnection(connectionId);
-        if (connection == null){
-             return Response.status(Response.Status.NOT_FOUND).build();
-        }else{
+        MachineConnection connection = repository.getConnectionById(connectionId);
+        if (connection == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } else {
             return Response.ok(new MachineConnectionStatusResponse(connection.isConnectionActive(), connection.getPort())).build();
         }
 
@@ -136,6 +150,7 @@ public class ConnectorServiceImpl implements ConnectorService {
         bootstrap.group(acceptorGroup, handlerGroup)
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ConnectionInitializer(connection.getId()))
+                .option(ChannelOption.SO_REUSEADDR, true)
                 .option(ChannelOption.SO_BACKLOG, 5)
                 .childOption(ChannelOption.SO_KEEPALIVE, true);
         ChannelFuture channel = bootstrap.localAddress(connection.getPort()).bind().sync();
