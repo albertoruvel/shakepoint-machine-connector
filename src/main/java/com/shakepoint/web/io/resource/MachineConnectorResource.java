@@ -1,6 +1,6 @@
 package com.shakepoint.web.io.resource;
 
-import com.shakepoint.web.io.data.dto.NewMachineConnectionRequest;
+import com.shakepoint.web.io.data.dto.req.NewMachineConnectionRequest;
 import com.shakepoint.web.io.service.ConnectorService;
 
 import javax.inject.Inject;
@@ -29,4 +29,5 @@ public class MachineConnectorResource {
     public Response getMachineConnectionStatus(@QueryParam("connectionId") String connectionId)throws Exception{
         return connectorService.getMachineConnectionStatus(connectionId);
     }
+
 }

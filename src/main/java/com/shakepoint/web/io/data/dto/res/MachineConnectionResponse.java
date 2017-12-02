@@ -1,4 +1,4 @@
-package com.shakepoint.web.io.data.dto;
+package com.shakepoint.web.io.data.dto.res;
 
 public class MachineConnectionResponse {
     private int port;

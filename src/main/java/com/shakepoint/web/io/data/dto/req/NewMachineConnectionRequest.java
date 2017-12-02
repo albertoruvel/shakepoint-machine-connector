@@ -1,4 +1,4 @@
-package com.shakepoint.web.io.data.dto;
+package com.shakepoint.web.io.data.dto.req;
 
 public class NewMachineConnectionRequest {
     private String machineId;

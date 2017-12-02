@@ -1,13 +1,17 @@
 package com.shakepoint.web.io.service.impl;
 
 import com.github.roar109.syring.annotation.ApplicationProperty;
-import com.shakepoint.web.io.data.dto.MachineConnectionResponse;
-import com.shakepoint.web.io.data.dto.MachineConnectionStatusResponse;
-import com.shakepoint.web.io.data.dto.NewMachineConnectionRequest;
+import com.shakepoint.web.io.data.dto.res.MachineConnectionResponse;
+import com.shakepoint.web.io.data.dto.res.MachineConnectionStatusResponse;
+import com.shakepoint.web.io.data.dto.req.NewMachineConnectionRequest;
+import com.shakepoint.web.io.data.dto.res.PrePurchaseResponse;
+import com.shakepoint.web.io.data.dto.res.PrePurchasesResponse;
 import com.shakepoint.web.io.data.entity.MachineConnection;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import com.shakepoint.web.io.netty.ConnectionInitializer;
 import com.shakepoint.web.io.service.ConnectorService;
+import com.shakepoint.web.io.service.QrCodeService;
+import com.shakepoint.web.io.util.TransformationUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -21,9 +25,8 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
-import java.net.BindException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -36,10 +39,17 @@ public class ConnectorServiceImpl implements ConnectorService {
     private MachineConnectionRepository repository;
 
     @Inject
+    private QrCodeService qrCodeService;
+
+    @Inject
     @ApplicationProperty(name = "com.shakepoint.web.io.port.range", type = ApplicationProperty.Types.SYSTEM)
     private String portRange;
 
-    static final DateFormat DATE_FORMAT = new SimpleDateFormat("mm/dd/yyyy hh:mm:ss a");
+    @Inject
+    @ApplicationProperty(name = "com.shakepoint.web.io.machine.max.prepurchases", type = ApplicationProperty.Types.SYSTEM)
+    private String maxPrepurchasesPerMachine;
+
+
     private final Logger log = Logger.getLogger(getClass());
     private final List<ChannelFuture> openConnections = Collections.synchronizedList(new ArrayList());
 
@@ -55,6 +65,7 @@ public class ConnectorServiceImpl implements ConnectorService {
             for (ChannelFuture channel : openConnections) {
                 channel.channel().close();
             }
+            repository.closeAllConnections();
         } catch (Exception ex) {
             log.error("Could not close connection", ex);
         }
@@ -64,15 +75,11 @@ public class ConnectorServiceImpl implements ConnectorService {
     private void createConnections(List<MachineConnection> connections) {
         NioEventLoopGroup acceptorGroup;
         NioEventLoopGroup handlerGroup;
-        ServerBootstrap bootstrap;
         try {
             for (MachineConnection connection : connections) {
                 acceptorGroup = new NioEventLoopGroup(1);
                 handlerGroup = new NioEventLoopGroup(1);
                 startConnection(acceptorGroup, handlerGroup, connection);
-                //update database
-                connection.setConnectionActive(true);
-                repository.updateConnection(connection);
             }
         } catch (InterruptedException ex) {
             log.error("Interrupted while creating netty bootstrap", ex);
@@ -97,7 +104,7 @@ public class ConnectorServiceImpl implements ConnectorService {
         if (connection == null) {
             connection = new MachineConnection();
             connection.setConnectionActive(false);
-            connection.setLastUpdate(DATE_FORMAT.format(new Date()));
+            connection.setLastUpdate(TransformationUtil.DATE_FORMAT.format(new Date()));
             connection.setMachineId(request.getMachineId());
             connection.setMachineToken(UUID.randomUUID().toString());
             connection.setPort(randomPort);
@@ -149,14 +156,14 @@ public class ConnectorServiceImpl implements ConnectorService {
         log.info(String.format("Creating connection socket for %s", connection.getId()));
         bootstrap.group(acceptorGroup, handlerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new ConnectionInitializer(connection.getId()))
+                .childHandler(new ConnectionInitializer(connection.getId(), repository, Integer.parseInt(maxPrepurchasesPerMachine), qrCodeService))
                 .option(ChannelOption.SO_REUSEADDR, true)
                 .option(ChannelOption.SO_BACKLOG, 5)
-                .childOption(ChannelOption.SO_KEEPALIVE, true);
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
+                .childOption(ChannelOption.SO_BACKLOG, 5);
         ChannelFuture channel = bootstrap.localAddress(connection.getPort()).bind().sync();
         openConnections.add(channel);
         log.info(String.format("Started Netty server on port %d", connection.getPort()));
         return channel;
     }
-
 }
