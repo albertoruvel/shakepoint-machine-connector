@@ -7,4 +7,8 @@ public enum PurchaseStatus {
     PurchaseStatus(int value) {
         this.value = value;
     }
+
+    public int getValue(){
+        return value;
+    }
 }

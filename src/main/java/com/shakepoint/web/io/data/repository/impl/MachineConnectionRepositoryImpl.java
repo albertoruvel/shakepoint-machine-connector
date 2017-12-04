@@ -1,6 +1,5 @@
 package com.shakepoint.web.io.data.repository.impl;
 
-import com.shakepoint.web.io.data.dto.req.socket.QRCodeValidationMachineMessage;
 import com.shakepoint.web.io.data.entity.MachineConnection;
 import com.shakepoint.web.io.data.entity.Product;
 import com.shakepoint.web.io.data.entity.Purchase;
@@ -102,5 +101,31 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     @Override
     public void addPurchase(Purchase purchase) {
         em.persist(purchase);
+    }
+
+    @Override
+    public int removePreAuthorizedPurchases(String machineId) {
+        List<Purchase> machinePurchases = getMachinePreAuthorizedPurchases(machineId);
+        for (Purchase purchase : machinePurchases){
+            em.remove(purchase);
+        }
+        /**return em.createNativeQuery("DELETE FROM purchase WHERE status = ? and machine_id = ?")
+                .setParameter(1, PurchaseStatus.PRE_AUTH)
+                .setParameter(2, machineId)
+                .executeUpdate();**/
+        return machinePurchases.size();
+    }
+
+    @Override
+    public void updatePurchaseStatus(String purchaseId, PurchaseStatus cashed) {
+        em.createQuery("UPDATE p FROM Purchase p SET p.status = :status WHERE p.id = :id")
+                .setParameter("status", cashed)
+                .setParameter("id", purchaseId)
+                .executeUpdate();
+    }
+
+    @Override
+    public Purchase getPurchase(String purchaseId) {
+        return em.find(Purchase.class, purchaseId);
     }
 }

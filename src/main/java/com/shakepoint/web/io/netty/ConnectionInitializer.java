@@ -30,10 +30,9 @@ public class ConnectionInitializer extends ChannelInitializer<SocketChannel> {
     protected void initChannel(SocketChannel socketChannel) throws Exception {
         log.info(String.format("Initializing channel for connection %s", connectionId));
         ChannelPipeline pipeline = socketChannel.pipeline();
-        pipeline.addLast(LineBasedFrameDecoder.class.getName(), new LineBasedFrameDecoder(256));
+        pipeline.addLast(LineBasedFrameDecoder.class.getName(), new LineBasedFrameDecoder(1024));
         pipeline.addLast(StringDecoder.class.getName(), new StringDecoder(CharsetUtil.UTF_8));
         pipeline.addLast(StringEncoder.class.getName(), new StringEncoder(CharsetUtil.UTF_8));
         pipeline.addLast("handler", new ChannelInboundHandler(connectionId, repository, maxPrePurchases, qrCodeService));
-
     }
 }

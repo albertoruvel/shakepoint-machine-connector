@@ -1,8 +1,8 @@
 package com.shakepoint.web.io.data.repository;
-import com.shakepoint.web.io.data.dto.req.socket.QRCodeValidationMachineMessage;
 import com.shakepoint.web.io.data.entity.MachineConnection;
 import com.shakepoint.web.io.data.entity.Product;
 import com.shakepoint.web.io.data.entity.Purchase;
+import com.shakepoint.web.io.data.entity.PurchaseStatus;
 
 import java.util.List;
 
@@ -77,4 +77,19 @@ public interface MachineConnectionRepository {
      * @param purchase
      */
     public void addPurchase(Purchase purchase);
+
+    /**
+     * remove all pre authorized purchases for a machine
+     * @param machineId
+     */
+    public int removePreAuthorizedPurchases(String machineId);
+
+    /**
+     * Updates a purchase status using purchase ID
+     * @param purchaseId
+     * @param cashed
+     */
+    public void updatePurchaseStatus(String purchaseId, PurchaseStatus cashed);
+
+    public Purchase getPurchase(String purchaseId);
 }
