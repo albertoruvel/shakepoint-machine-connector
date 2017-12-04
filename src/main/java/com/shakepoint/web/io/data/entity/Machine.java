@@ -10,7 +10,7 @@ public class Machine {
     @Id
     private String id;
 
-    @OneToMany()
+    @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "machine_product",
             joinColumns = {
                     @JoinColumn(name = "machine_id", referencedColumnName = "id")
