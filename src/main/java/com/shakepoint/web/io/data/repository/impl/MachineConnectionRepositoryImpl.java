@@ -121,7 +121,7 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
 
     @Override
     public void updatePurchaseStatus(String purchaseId, PurchaseStatus cashed) {
-        em.createQuery("UPDATE p FROM Purchase p SET p.status = :status WHERE p.id = :id")
+        em.createQuery("UPDATE Purchase p SET p.status = :status WHERE p.id = :id")
                 .setParameter("status", cashed)
                 .setParameter("id", purchaseId)
                 .executeUpdate();
