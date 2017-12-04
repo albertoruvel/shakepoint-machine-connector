@@ -78,7 +78,7 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
 
     @Override
     public void closeAllConnections() {
-        em.createQuery("UPDATE mc FROM MachineConnection mc SET mc.connectionActive = false").executeUpdate();
+        em.createQuery("UPDATE MachineConnection mc SET mc.connectionActive = false").executeUpdate();
     }
 
     @Override
