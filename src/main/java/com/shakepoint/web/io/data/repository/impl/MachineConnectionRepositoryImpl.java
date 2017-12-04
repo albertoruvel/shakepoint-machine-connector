@@ -6,6 +6,7 @@ import com.shakepoint.web.io.data.entity.Purchase;
 import com.shakepoint.web.io.data.entity.PurchaseStatus;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import com.shakepoint.web.io.service.QrCodeService;
+import org.apache.log4j.Logger;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -24,6 +25,8 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
 
     @Inject
     private QrCodeService qrCodeService;
+
+    private final Logger log = Logger.getLogger(getClass());
 
     @Override
     public MachineConnection getConnection(String machineId) {
@@ -52,7 +55,7 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
         try {
             em.persist(connection);
         } catch (Exception ex) {
-
+            log.error("Could not persist machine connection", ex);
         }
     }
 

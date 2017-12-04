@@ -55,6 +55,7 @@ public class ConnectorServiceImpl implements ConnectorService {
 
     @PostConstruct
     public void init() {
+        log.info("Getting all connections data");
         final List<MachineConnection> connections = repository.getConnections();
         createConnections(connections);
     }
