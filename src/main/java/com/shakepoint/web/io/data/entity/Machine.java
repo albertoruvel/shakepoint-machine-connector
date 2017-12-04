@@ -12,11 +12,9 @@ public class Machine {
 
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "machine_product",
-            joinColumns = {
-                    @JoinColumn(name = "machine_id", referencedColumnName = "id")
-            }, inverseJoinColumns = {
-            @JoinColumn(name = "product_id", referencedColumnName = "id")
-    })
+            joinColumns = @JoinColumn(name = "machine_id"),
+            inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
     private List<Product> products;
 
     public Machine() {
