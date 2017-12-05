@@ -1,9 +1,6 @@
 package com.shakepoint.web.io.data.repository.impl;
 
-import com.shakepoint.web.io.data.entity.MachineConnection;
-import com.shakepoint.web.io.data.entity.Product;
-import com.shakepoint.web.io.data.entity.Purchase;
-import com.shakepoint.web.io.data.entity.PurchaseStatus;
+import com.shakepoint.web.io.data.entity.*;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import com.shakepoint.web.io.service.QrCodeService;
 import org.apache.log4j.Logger;
@@ -27,6 +24,18 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     private QrCodeService qrCodeService;
 
     private final Logger log = Logger.getLogger(getClass());
+
+    @Override
+    public boolean isPortAvailable(int port) {
+        try {
+            BigInteger p = (BigInteger) em.createQuery("SELECT COUNT(mc.port) FROM MachineMachineConnection mc WHERE mc.port = :port")
+                    .setParameter("port", port)
+                    .getSingleResult();
+            return p.intValue() > 0;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
 
     @Override
     public MachineConnection getConnection(String machineId) {
@@ -59,32 +68,10 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
         }
     }
 
-    @Override
-    public List<MachineConnection> getConnections() {
-        return em.createQuery("SELECT mc FROM MachineConnection mc")
-                .getResultList();
-    }
-
-    @Override
-    public boolean isConnectionActive(String id) {
-        return ((Boolean) em.createQuery("SELECT mc.connectionActive FROM MachineConnection mc WHERE mc.id = :id")
-                .setParameter("id", id).getSingleResult());
-    }
-
-    @Override
-    public void updateConnection(MachineConnection connection) {
-        em.merge(connection);
-    }
 
     @Override
     public void closeAllConnections() {
         em.createQuery("UPDATE MachineConnection mc SET mc.connectionActive = false").executeUpdate();
-    }
-
-    @Override
-    public boolean machineExists(String machineId) {
-        return ((BigInteger) em.createNativeQuery("SELECT COUNT(*) FROM machine WHERE id = ?")
-                .setParameter(1, machineId).getSingleResult()).intValue() > 0;
     }
 
     @Override
@@ -109,13 +96,13 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     @Override
     public int removePreAuthorizedPurchases(String machineId) {
         List<Purchase> machinePurchases = getMachinePreAuthorizedPurchases(machineId);
-        for (Purchase purchase : machinePurchases){
+        for (Purchase purchase : machinePurchases) {
             em.remove(purchase);
         }
         /**return em.createNativeQuery("DELETE FROM purchase WHERE status = ? and machine_id = ?")
-                .setParameter(1, PurchaseStatus.PRE_AUTH)
-                .setParameter(2, machineId)
-                .executeUpdate();**/
+         .setParameter(1, PurchaseStatus.PRE_AUTH)
+         .setParameter(2, machineId)
+         .executeUpdate();**/
         return machinePurchases.size();
     }
 
@@ -130,5 +117,18 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     @Override
     public Purchase getPurchase(String purchaseId) {
         return em.find(Purchase.class, purchaseId);
+    }
+
+    @Override
+    public List<Machine> getMachines() {
+        return em.createQuery("SELECT m FROM Machine m")
+                .getResultList();
+    }
+
+    @Override
+    public void updateMachineConnectionStatus(String connectionId, boolean b) {
+        em.createQuery("UPDATE MachineConnection mc SET mc.connectionActive = :value")
+                .setParameter("value", b)
+                .executeUpdate();
     }
 }

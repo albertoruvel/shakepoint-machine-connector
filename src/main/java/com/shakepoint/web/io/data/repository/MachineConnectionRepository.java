@@ -1,12 +1,16 @@
 package com.shakepoint.web.io.data.repository;
-import com.shakepoint.web.io.data.entity.MachineConnection;
-import com.shakepoint.web.io.data.entity.Product;
-import com.shakepoint.web.io.data.entity.Purchase;
-import com.shakepoint.web.io.data.entity.PurchaseStatus;
+import com.shakepoint.web.io.data.entity.*;
 
 import java.util.List;
 
 public interface MachineConnectionRepository {
+
+    /**
+     * check if a port is available or not
+     * @param port
+     * @return
+     */
+    public boolean isPortAvailable(int port);
     /**
      * Get a connection using a machine id
      * @param machineId
@@ -27,36 +31,11 @@ public interface MachineConnectionRepository {
      */
     public void createConnection(MachineConnection connection);
 
-    /**
-     * Get all existing connections
-     * @return
-     */
-    public List<MachineConnection> getConnections();
-
-    /**
-     * check if a connection is active
-     * @param id
-     * @return
-     */
-    public boolean isConnectionActive(String id);
-
-    /**
-     * update a connection
-     * @param connection
-     */
-    public void updateConnection(MachineConnection connection);
 
     /**
      * set active flag to false on all connected machines
      */
     public void closeAllConnections();
-
-    /**
-     * checks if a machine exists using its id
-     * @param machineId
-     * @return
-     */
-    public boolean machineExists(String machineId);
 
     /**
      * Returns a list of pre-auth purchases for a machine
@@ -92,4 +71,8 @@ public interface MachineConnectionRepository {
     public void updatePurchaseStatus(String purchaseId, PurchaseStatus cashed);
 
     public Purchase getPurchase(String purchaseId);
+
+    List<Machine> getMachines();
+
+    void updateMachineConnectionStatus(String connectionId, boolean b);
 }

@@ -34,5 +34,7 @@ public class ConnectionInitializer extends ChannelInitializer<SocketChannel> {
         pipeline.addLast(StringDecoder.class.getName(), new StringDecoder(CharsetUtil.UTF_8));
         pipeline.addLast(StringEncoder.class.getName(), new StringEncoder(CharsetUtil.UTF_8));
         pipeline.addLast("handler", new ChannelInboundHandler(connectionId, repository, maxPrePurchases, qrCodeService));
+        log.info(String.format("Setting connection %s to ACTIVE", connectionId));
+        repository.updateMachineConnectionStatus(connectionId, true);
     }
 }

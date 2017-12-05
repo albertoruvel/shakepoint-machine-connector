@@ -6,6 +6,7 @@ import com.shakepoint.web.io.data.dto.res.MachineConnectionStatusResponse;
 import com.shakepoint.web.io.data.dto.req.NewMachineConnectionRequest;
 import com.shakepoint.web.io.data.dto.res.PrePurchaseResponse;
 import com.shakepoint.web.io.data.dto.res.PrePurchasesResponse;
+import com.shakepoint.web.io.data.entity.Machine;
 import com.shakepoint.web.io.data.entity.MachineConnection;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import com.shakepoint.web.io.netty.ConnectionInitializer;
@@ -56,8 +57,8 @@ public class ConnectorServiceImpl implements ConnectorService {
     @PostConstruct
     public void init() {
         log.info("Getting all connections data");
-        final List<MachineConnection> connections = repository.getConnections();
-        createConnections(connections);
+        final List<Machine> machines = repository.getMachines();
+        createConnections(machines);
     }
 
     @PreDestroy
@@ -73,14 +74,14 @@ public class ConnectorServiceImpl implements ConnectorService {
     }
 
 
-    private void createConnections(List<MachineConnection> connections) {
+    private void createConnections(List<Machine> machines) {
         NioEventLoopGroup acceptorGroup;
         NioEventLoopGroup handlerGroup;
         try {
-            for (MachineConnection connection : connections) {
+            for (Machine machine : machines) {
                 acceptorGroup = new NioEventLoopGroup(1);
                 handlerGroup = new NioEventLoopGroup(1);
-                startConnection(acceptorGroup, handlerGroup, connection);
+                startConnection(acceptorGroup, handlerGroup, machine);
             }
         } catch (InterruptedException ex) {
             log.error("Interrupted while creating netty bootstrap", ex);
@@ -98,50 +99,6 @@ public class ConnectorServiceImpl implements ConnectorService {
     }
 
     @Override
-    public Response createMachineConnection(NewMachineConnectionRequest request) {
-        //check if there is an existing machine connection
-        MachineConnection connection = repository.getConnection(request.getMachineId());
-        int randomPort = ThreadLocalRandom.current().nextInt(getFromPort(), getToPort() + 1);
-        if (connection == null) {
-            connection = new MachineConnection();
-            connection.setConnectionActive(false);
-            connection.setLastUpdate(TransformationUtil.DATE_FORMAT.format(new Date()));
-            connection.setMachineId(request.getMachineId());
-            connection.setMachineToken(UUID.randomUUID().toString());
-            connection.setPort(randomPort);
-            repository.createConnection(connection);
-
-            //try to open connection
-            try {
-                startConnection(new NioEventLoopGroup(1), new NioEventLoopGroup(1), connection);
-                return Response.ok(new MachineConnectionResponse(randomPort, connection.getId(),
-                        "Machine connection have been created, try to open connection at /io/machine/openMachineConnection"))
-                        .build();
-            } catch (InterruptedException ex) {
-                log.error("Interrupted while creating netty bootstrap", ex);
-                return Response.status(500).entity(new MachineConnectionResponse(-1, null, "Could not start connection, try again")).build();
-            }
-
-        } else {
-            if (repository.isConnectionActive(connection.getId())) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(new MachineConnectionResponse(-1, null, "Connection is already active")).build();
-            } else {
-                try {
-                    startConnection(new NioEventLoopGroup(1), new NioEventLoopGroup(1), connection);
-                    return Response.ok(new MachineConnectionResponse(randomPort, connection.getId(),
-                            "Machine connection have been created, try to open connection at /io/machine/openMachineConnection"))
-                            .build();
-                } catch (InterruptedException ex) {
-                    log.error("Interrupted while creating netty bootstrap", ex);
-                    return Response.status(500).entity(new MachineConnectionResponse(-1, null, "Could not start connection, try again")).build();
-                }
-            }
-
-        }
-    }
-
-    @Override
     public Response getMachineConnectionStatus(String connectionId) throws Exception {
         MachineConnection connection = repository.getConnectionById(connectionId);
         if (connection == null) {
@@ -152,12 +109,21 @@ public class ConnectorServiceImpl implements ConnectorService {
 
     }
 
-    private ChannelFuture startConnection(NioEventLoopGroup acceptorGroup, NioEventLoopGroup handlerGroup, MachineConnection connection) throws InterruptedException {
+    private ChannelFuture startConnection(NioEventLoopGroup acceptorGroup, NioEventLoopGroup handlerGroup, Machine machine) throws InterruptedException {
+        MachineConnection connection = repository.getConnection(machine.getId());
+        if (connection == null) {
+            //create a new one
+            connection = TransformationUtil.createMachineConnection(machine.getId(), getFromPort(), getToPort());
+            while (!repository.isPortAvailable(connection.getPort())) {
+                connection = TransformationUtil.createMachineConnection(machine.getId(), getFromPort(), getToPort());
+            }
+            repository.createConnection(connection);
+        }
         ServerBootstrap bootstrap = new ServerBootstrap();
-        log.info(String.format("Creating connection socket for %s", connection.getId()));
+        log.info(String.format("Creating connection socket for %s", machine.getId()));
         bootstrap.group(acceptorGroup, handlerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new ConnectionInitializer(connection.getId(), repository, Integer.parseInt(maxPrepurchasesPerMachine), qrCodeService))
+                .childHandler(new ConnectionInitializer(machine.getId(), repository, Integer.parseInt(maxPrepurchasesPerMachine), qrCodeService))
                 .option(ChannelOption.SO_REUSEADDR, true)
                 .option(ChannelOption.SO_BACKLOG, 5)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)

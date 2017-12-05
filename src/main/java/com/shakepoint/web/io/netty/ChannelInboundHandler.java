@@ -136,10 +136,18 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     }
 
     private void dispatchQrCodeExchangeMessageType(ChannelHandlerContext cxt, MachineMessage request) {
-
+        final List<PreAuthPurchase> preAuthPurchases = exchangePurchases(request);
+        final String json = gson.toJson(preAuthPurchases);
+        cxt.channel().writeAndFlush(json + "\n");
     }
 
     private void dispatchReconnectMessageType(ChannelHandlerContext cxt, MachineMessage request) {
+        final List<PreAuthPurchase> preAuthPurchases = exchangePurchases(request);
+        final String json = gson.toJson(preAuthPurchases);
+        cxt.channel().writeAndFlush(json + "\n");
+    }
+
+    private List<PreAuthPurchase> exchangePurchases(MachineMessage request){
         List<String> purchases = (ArrayList<String>)request.getMessage();
         List<PreAuthPurchase> preAuthPurchases = new ArrayList();
         Purchase oldPurchase;
@@ -152,7 +160,6 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             newPurchase = createPurchase(request.getMachineId(), oldPurchase.getProductId());
             preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase));
         }
-        final String json = gson.toJson(preAuthPurchases);
-        cxt.channel().writeAndFlush(json + "\n");
+        return preAuthPurchases;
     }
 }
