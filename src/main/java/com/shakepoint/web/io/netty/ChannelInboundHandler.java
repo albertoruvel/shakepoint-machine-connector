@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.shakepoint.web.io.data.dto.req.socket.MachineMessage;
 import com.shakepoint.web.io.data.dto.req.socket.MachineMessageType;
 import com.shakepoint.web.io.data.dto.req.socket.MachineReconnectMessage;
+import com.shakepoint.web.io.data.dto.req.socket.ProductLevelMessage;
 import com.shakepoint.web.io.data.dto.res.socket.PreAuthPurchase;
 import com.shakepoint.web.io.data.entity.Product;
 import com.shakepoint.web.io.data.entity.Purchase;
@@ -132,7 +133,29 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             case QR_CODE_EXCHANGE:
                 dispatchQrCodeExchangeMessageType(cxt, request);
                 break;
+            case PRODUCT_LEVEL_ALERT:
+                dispatchProductLowLevelMessageType(cxt, request);
+                break;
+            case MACHINE_FAIL:
+                dispatchMachineFailMessageType(cxt, request);
+                break;
         }
+    }
+
+    private void dispatchMachineFailMessageType(ChannelHandlerContext cxt, MachineMessage request) {
+        //machine fail, need to create entity to register
+    }
+
+    private void dispatchProductLowLevelMessageType(ChannelHandlerContext cxt, MachineMessage request) {
+        ProductLevelMessage productLevelMessage = (ProductLevelMessage)request.getMessage();
+        if (productLevelMessage.getProductLevelType().equals("alert")){
+            //levels are below 30%
+            //TODO: send email here to technician
+        }else if(productLevelMessage.getProductLevelType().equals("warning")){
+            //levels are below 15%
+            //TODO: send email here to technician
+        }
+
     }
 
     private void dispatchQrCodeExchangeMessageType(ChannelHandlerContext cxt, MachineMessage request) {

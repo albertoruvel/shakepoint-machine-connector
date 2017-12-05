@@ -64,6 +64,7 @@ public class ConnectorServiceImpl implements ConnectorService {
     @PreDestroy
     public void destroy() {
         try {
+            log.info("Closing existing connections...");
             for (ChannelFuture channel : openConnections) {
                 channel.channel().close();
             }

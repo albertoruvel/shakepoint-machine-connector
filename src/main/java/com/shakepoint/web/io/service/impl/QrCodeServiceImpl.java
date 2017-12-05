@@ -1,5 +1,14 @@
 package com.shakepoint.web.io.service.impl;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.SdkClientException;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.github.roar109.syring.annotation.ApplicationProperty;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -9,7 +18,10 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.shakepoint.web.io.data.entity.Purchase;
 import com.shakepoint.web.io.service.QrCodeService;
+import org.apache.log4j.Logger;
 
+import javax.annotation.PostConstruct;
+import javax.ejb.Startup;
 import javax.ejb.Stateless;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
@@ -19,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
 
+@Startup
 @Stateless
 public class QrCodeServiceImpl implements QrCodeService {
 
@@ -26,7 +39,36 @@ public class QrCodeServiceImpl implements QrCodeService {
     @ApplicationProperty(name = "com.shakepoint.web.io.qrcode.dir", type = ApplicationProperty.Types.SYSTEM)
     private String tmpFolder;
 
+    @Inject
+    @ApplicationProperty(name = "aws.accessKeyId", type = ApplicationProperty.Types.SYSTEM)
+    private String accessKey;
+
+    @Inject
+    @ApplicationProperty(name = "aws.secretKey", type = ApplicationProperty.Types.SYSTEM)
+    private String secretKey;
+
+    @Inject
+    @ApplicationProperty(name = "com.shakepoint.web.s3.qr.bucket.name", type = ApplicationProperty.Types.SYSTEM)
+    private String bucketName;
+
+    private AmazonS3 amazonS3;
+
+    private static final String S3_FORMAT = "https://%s.s3.amazonaws.com/%s";
+    private static final Logger log = Logger.getLogger(QrCodeService.class);
     private final String qrCodeDataFormat = "%s_%s_%s_%s"; //purchase_machine_product_id
+
+    @PostConstruct
+    public void init(){
+        amazonS3 = new AmazonS3Client(new AWSCredentialsProvider() {
+            public AWSCredentials getCredentials() {
+                return new BasicAWSCredentials(accessKey, secretKey);
+            }
+
+            public void refresh() {
+
+            }
+        });
+    }
 
     @Override
     public String createQrCode(Purchase purchase) {
@@ -58,11 +100,44 @@ public class QrCodeServiceImpl implements QrCodeService {
                 }
             }
             ImageIO.write(image, "png", file);
+            return uploadFile(file.getAbsolutePath());
         } catch (WriterException e) {
             e.printStackTrace();
+            return null;
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
         }
-        return path;
+    }
+
+    private String uploadFile(String filePath){
+        File  file = new File(filePath);
+        String url = null;
+        if(file.exists()){
+            log.info(String.format("Uploading file to S3 service: Starting upload of %s", file.getAbsolutePath()));
+            //choose bucket name and get fcm token
+            try{
+                //upload file
+                final PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, file.getName(), file);
+                putObjectRequest.setCannedAcl(CannedAccessControlList.PublicRead);
+                amazonS3.putObject(putObjectRequest);
+
+                //generate url
+                url = String.format(S3_FORMAT, bucketName, file.getName());
+                //delete tmp file
+                file.delete();
+            } catch(ArrayIndexOutOfBoundsException ex){
+                log.error(String.format("ArrayIndexOutOfBoundsException: %s", ex.getMessage()));
+            } catch(AmazonServiceException ex){
+                log.error(String.format("AmazonServiceException: %s", ex.getMessage()));
+            } catch(SdkClientException ex){
+                log.error(String.format("SdkClientException: %s", ex.getMessage()));
+            } catch(Exception ex){
+                log.error(ex.getMessage());
+            }
+        }else{
+            log.error(String.format("Cannot upload file to S3 service: File %s does not exists on %s", file.getAbsolutePath(), tmpFolder));
+        }
+        return url;
     }
 }

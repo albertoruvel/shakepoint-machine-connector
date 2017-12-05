@@ -1,6 +1,5 @@
 package com.shakepoint.web.io.resource;
 
-import com.shakepoint.web.io.data.dto.req.NewMachineConnectionRequest;
 import com.shakepoint.web.io.service.ConnectorService;
 
 import javax.inject.Inject;
@@ -13,15 +12,6 @@ public class MachineConnectorResource {
 
     @Inject
     private ConnectorService connectorService;
-
-
-    @POST
-    @Path("createMachineConnection")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response createMachineConnection(NewMachineConnectionRequest request)throws Exception{
-        return connectorService.createMachineConnection(request);
-    }
 
     @GET
     @Path("getMachineStatus")

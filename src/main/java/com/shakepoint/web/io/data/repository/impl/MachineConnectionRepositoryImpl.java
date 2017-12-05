@@ -28,10 +28,10 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     @Override
     public boolean isPortAvailable(int port) {
         try {
-            BigInteger p = (BigInteger) em.createQuery("SELECT COUNT(mc.port) FROM MachineMachineConnection mc WHERE mc.port = :port")
+            Long p = (Long) em.createQuery("SELECT COUNT(mc.port) FROM MachineConnection mc WHERE mc.port = :port")
                     .setParameter("port", port)
                     .getSingleResult();
-            return p.intValue() > 0;
+            return p.intValue() == 0;
         } catch (Exception ex) {
             return false;
         }
