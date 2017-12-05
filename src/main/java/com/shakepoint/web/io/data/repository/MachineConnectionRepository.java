@@ -75,4 +75,6 @@ public interface MachineConnectionRepository {
     List<Machine> getMachines();
 
     void updateMachineConnectionStatus(String connectionId, boolean b);
+    public void persistMachineFail(MachineFail fail);
+    public Machine getMachine(String id);
 }

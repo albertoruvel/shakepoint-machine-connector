@@ -2,11 +2,9 @@ package com.shakepoint.web.io.netty;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.shakepoint.web.io.data.dto.req.socket.MachineMessage;
-import com.shakepoint.web.io.data.dto.req.socket.MachineMessageType;
-import com.shakepoint.web.io.data.dto.req.socket.MachineReconnectMessage;
-import com.shakepoint.web.io.data.dto.req.socket.ProductLevelMessage;
+import com.shakepoint.web.io.data.dto.req.socket.*;
 import com.shakepoint.web.io.data.dto.res.socket.PreAuthPurchase;
+import com.shakepoint.web.io.data.entity.MachineFail;
 import com.shakepoint.web.io.data.entity.Product;
 import com.shakepoint.web.io.data.entity.Purchase;
 import com.shakepoint.web.io.data.entity.PurchaseStatus;
@@ -143,7 +141,11 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     }
 
     private void dispatchMachineFailMessageType(ChannelHandlerContext cxt, MachineMessage request) {
+        MachineFailMessage machineFailMessage = (MachineFailMessage)request.getMessage();
         //machine fail, need to create entity to register
+        MachineFail fail = TransformationUtil.createMachineFail(machineFailMessage.getFailMessage(), machineFailMessage.getDate(),
+                repository.getMachine(request.getMachineId()));
+        repository.persistMachineFail(fail);
     }
 
     private void dispatchProductLowLevelMessageType(ChannelHandlerContext cxt, MachineMessage request) {
@@ -155,7 +157,6 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             //levels are below 15%
             //TODO: send email here to technician
         }
-
     }
 
     private void dispatchQrCodeExchangeMessageType(ChannelHandlerContext cxt, MachineMessage request) {

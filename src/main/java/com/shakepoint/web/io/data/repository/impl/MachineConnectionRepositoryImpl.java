@@ -131,4 +131,20 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
                 .setParameter("value", b)
                 .executeUpdate();
     }
+
+    @Override
+    public void persistMachineFail(MachineFail fail) {
+        em.persist(fail);
+    }
+
+    @Override
+    public Machine getMachine(String id) {
+        try{
+            return (Machine)em.createQuery("SELECT m FROM Machine m WHERE m.id = :id")
+                    .setParameter("id", id)
+                    .getSingleResult();
+        }catch(NoResultException ex){
+            return null;
+        }
+    }
 }

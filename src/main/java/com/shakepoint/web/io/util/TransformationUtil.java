@@ -1,7 +1,9 @@
 package com.shakepoint.web.io.util;
 
 import com.shakepoint.web.io.data.dto.res.socket.PreAuthPurchase;
+import com.shakepoint.web.io.data.entity.Machine;
 import com.shakepoint.web.io.data.entity.MachineConnection;
+import com.shakepoint.web.io.data.entity.MachineFail;
 import com.shakepoint.web.io.data.entity.Purchase;
 import org.apache.log4j.Logger;
 
@@ -38,5 +40,13 @@ public class TransformationUtil {
         connection.setMachineToken(UUID.randomUUID().toString());
         connection.setPort(randomPort);
         return connection;
+    }
+
+    public static MachineFail createMachineFail(String failMessage, String date, Machine machine) {
+        MachineFail fail = new MachineFail();
+        fail.setDate(date);
+        fail.setMessage(failMessage);
+        fail.setMachine(machine);
+        return fail;
     }
 }
