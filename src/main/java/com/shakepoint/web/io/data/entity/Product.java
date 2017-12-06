@@ -21,6 +21,9 @@ public class Product {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "engine_use_time")
+    private Integer engineUseTime;
+
     public Product() {
     }
 
@@ -54,5 +57,13 @@ public class Product {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Integer getEngineUseTime() {
+        return engineUseTime;
+    }
+
+    public void setEngineUseTime(Integer engineUseTime) {
+        this.engineUseTime = engineUseTime;
     }
 }

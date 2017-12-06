@@ -69,13 +69,13 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         if (machinePurchases.isEmpty()) {
             log.info(String.format("Creating new pre authorized purchases for machine %s", machineId));
             //create N purchases
-            preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(createPurchases(machineId)));
+            preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(createPurchases(machineId), repository));
         } else {
             int removedPurchases = repository.removePreAuthorizedPurchases(machineId);
             log.info(String.format("%d pre authorized purchases have been removed to create new ones", removedPurchases));
             //create (maxPrePurchases - size) purchases
             preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(
-                    createPurchases(machineId)));
+                    createPurchases(machineId), repository));
         }
 
         //create a json response
@@ -182,7 +182,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             oldPurchase = repository.getPurchase(purchaseId);
             //create a new purchase
             newPurchase = createPurchase(request.getMachineId(), oldPurchase.getProductId());
-            preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase));
+            preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId())));
         }
         return preAuthPurchases;
     }

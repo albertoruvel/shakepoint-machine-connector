@@ -26,6 +26,13 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     private final Logger log = Logger.getLogger(getClass());
 
     @Override
+    public Integer getProductEngineUseTime(String productId) {
+        return ((Integer)em.createQuery("SELECT p.engineUseTime FROM Product p WHERE p.id = :id")
+                .setParameter("id", productId)
+                .getSingleResult());
+    }
+
+    @Override
     public boolean isPortAvailable(int port) {
         try {
             Long p = (Long) em.createQuery("SELECT COUNT(mc.port) FROM MachineConnection mc WHERE mc.port = :port")

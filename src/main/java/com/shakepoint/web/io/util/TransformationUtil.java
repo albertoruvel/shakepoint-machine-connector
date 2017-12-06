@@ -5,6 +5,7 @@ import com.shakepoint.web.io.data.entity.Machine;
 import com.shakepoint.web.io.data.entity.MachineConnection;
 import com.shakepoint.web.io.data.entity.MachineFail;
 import com.shakepoint.web.io.data.entity.Purchase;
+import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import org.apache.log4j.Logger;
 
 import java.text.DateFormat;
@@ -18,17 +19,17 @@ public class TransformationUtil {
 
     private static Logger log = Logger.getLogger(TransformationUtil.class);
 
-    public static Collection<PreAuthPurchase> createPreAuthPurchases(List<Purchase> purchases) {
+    public static Collection<PreAuthPurchase> createPreAuthPurchases(List<Purchase> purchases, MachineConnectionRepository repository) {
 
         List<PreAuthPurchase> prePurchases = new ArrayList();
         for (Purchase purchase : purchases) {
-            prePurchases.add(createPreAuthPurchase(purchase));
+            prePurchases.add(createPreAuthPurchase(purchase, repository.getProductEngineUseTime(purchase.getProductId())));
         }
         return prePurchases;
     }
 
-    public static PreAuthPurchase createPreAuthPurchase(Purchase purchase) {
-        return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate());
+    public static PreAuthPurchase createPreAuthPurchase(Purchase purchase, int engineUseTime) {
+        return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), engineUseTime);
     }
 
     public static MachineConnection createMachineConnection(String machineId, int fromPort, int toPort){

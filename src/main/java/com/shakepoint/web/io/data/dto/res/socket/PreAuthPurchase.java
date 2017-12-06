@@ -4,11 +4,13 @@ public class PreAuthPurchase {
     private String purchaseId;
     private String productId;
     private String date;
+    private Integer engineUseTime;
 
-    public PreAuthPurchase(String purchaseId, String productId, String date) {
+    public PreAuthPurchase(String purchaseId, String productId, String date, Integer engineUseTime) {
         this.purchaseId = purchaseId;
         this.productId = productId;
         this.date = date;
+        this.engineUseTime = engineUseTime;
     }
 
     public String getProductId() {
@@ -33,5 +35,13 @@ public class PreAuthPurchase {
 
     public void setPurchaseId(String purchaseId) {
         this.purchaseId = purchaseId;
+    }
+
+    public Integer getEngineUseTime() {
+        return engineUseTime;
+    }
+
+    public void setEngineUseTime(Integer engineUseTime) {
+        this.engineUseTime = engineUseTime;
     }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 public interface MachineConnectionRepository {
 
+    public Integer getProductEngineUseTime(String productId);
     /**
      * check if a port is available or not
      * @param port
