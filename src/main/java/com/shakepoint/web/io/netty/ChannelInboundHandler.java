@@ -40,9 +40,17 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        String jsonMessage = (String) msg;
-        MachineMessage request = gson.fromJson(jsonMessage, MachineMessage.class);
+        MachineMessage request = null;
+        try{
+            String jsonMessage = (String) msg;
+            request = gson.fromJson(jsonMessage, MachineMessage.class);
+        }catch(Exception ex){
+            dispatchNotValidMessageType(ctx);
+            return;
+        }
+
         processMachineMessageRequest(ctx, request);
+
     }
 
     @Override
@@ -111,7 +119,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         return purchase;
     }
 
-    private void dispatchNotValidMessageType(ChannelHandlerContext cxt, MachineMessage request) {
+    private void dispatchNotValidMessageType(ChannelHandlerContext cxt) {
         //TODO: send email to technician notifying that this should not happen
     }
 
@@ -124,9 +132,6 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                 break;
             case RECONNECTED:
                 dispatchReconnectMessageType(cxt, request);
-                break;
-            case NOT_VALID:
-                dispatchNotValidMessageType(cxt, request);
                 break;
             case QR_CODE_EXCHANGE:
                 dispatchQrCodeExchangeMessageType(cxt, request);
