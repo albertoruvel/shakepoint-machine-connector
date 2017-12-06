@@ -29,7 +29,13 @@ public class TransformationUtil {
     }
 
     public static PreAuthPurchase createPreAuthPurchase(Purchase purchase, String engineUseTime) {
-        return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), Long.parseLong(engineUseTime));
+        try{
+            Long useTime = Long.parseLong(engineUseTime);
+            return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), useTime);
+        }catch(Exception ex){
+            return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), 0L);
+        }
+
     }
 
     public static MachineConnection createMachineConnection(String machineId, int fromPort, int toPort){
