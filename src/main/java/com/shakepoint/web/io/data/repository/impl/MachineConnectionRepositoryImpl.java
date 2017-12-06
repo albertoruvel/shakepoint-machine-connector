@@ -35,9 +35,10 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
 
     @Override
     public String getProductEngineUseTime(String productId) {
-        return ((String)em.createQuery("SELECT p.engineUseTime FROM Product p WHERE p.id = :id")
+        Integer use =  (Integer)em.createQuery("SELECT p.engineUseTime FROM Product p WHERE p.id = :id")
                 .setParameter("id", productId)
-                .getSingleResult());
+                .getSingleResult();
+        return use.toString();
     }
 
     @Override
