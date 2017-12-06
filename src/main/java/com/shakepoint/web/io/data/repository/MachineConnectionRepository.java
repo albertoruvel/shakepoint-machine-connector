@@ -7,7 +7,7 @@ public interface MachineConnectionRepository {
 
     public int getSlotNumber(String machineId, String productId);
 
-    public Integer getProductEngineUseTime(String productId);
+    public String getProductEngineUseTime(String productId);
     /**
      * check if a port is available or not
      * @param port

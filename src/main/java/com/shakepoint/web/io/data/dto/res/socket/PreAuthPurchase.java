@@ -4,9 +4,9 @@ public class PreAuthPurchase {
     private String purchaseId;
     private String productId;
     private String date;
-    private Integer engineUseTime;
+    private Long engineUseTime;
 
-    public PreAuthPurchase(String purchaseId, String productId, String date, Integer engineUseTime) {
+    public PreAuthPurchase(String purchaseId, String productId, String date, Long engineUseTime) {
         this.purchaseId = purchaseId;
         this.productId = productId;
         this.date = date;
@@ -37,11 +37,11 @@ public class PreAuthPurchase {
         this.purchaseId = purchaseId;
     }
 
-    public Integer getEngineUseTime() {
+    public Long getEngineUseTime() {
         return engineUseTime;
     }
 
-    public void setEngineUseTime(Integer engineUseTime) {
+    public void setEngineUseTime(Long engineUseTime) {
         this.engineUseTime = engineUseTime;
     }
 }

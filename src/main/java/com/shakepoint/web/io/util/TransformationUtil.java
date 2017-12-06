@@ -28,8 +28,8 @@ public class TransformationUtil {
         return prePurchases;
     }
 
-    public static PreAuthPurchase createPreAuthPurchase(Purchase purchase, int engineUseTime) {
-        return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), engineUseTime);
+    public static PreAuthPurchase createPreAuthPurchase(Purchase purchase, String engineUseTime) {
+        return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), Long.parseLong(engineUseTime));
     }
 
     public static MachineConnection createMachineConnection(String machineId, int fromPort, int toPort){
