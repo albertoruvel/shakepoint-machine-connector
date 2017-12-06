@@ -56,7 +56,8 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         if (cause instanceof IOException) {
             log.info(String.format("Client %s have been disconnected", connectionId));
         } else {
-            log.error(cause);
+            log.error("Unexpected error", cause);
+            cause.printStackTrace();
         }
     }
 
