@@ -112,7 +112,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     }
 
     private void dispatchNotValidMessageType(ChannelHandlerContext cxt, MachineMessage request) {
-
+        //TODO: send email to technician notifying that this should not happen
     }
 
     private void processMachineMessageRequest(ChannelHandlerContext cxt, MachineMessage request) {
@@ -145,6 +145,8 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         //machine fail, need to create entity to register
         MachineFail fail = TransformationUtil.createMachineFail(machineFailMessage.getFailMessage(), machineFailMessage.getDate(),
                 repository.getMachine(request.getMachineId()));
+
+        //TODO: send error email
         repository.persistMachineFail(fail);
     }
 
