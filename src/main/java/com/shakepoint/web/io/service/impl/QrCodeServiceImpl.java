@@ -114,7 +114,6 @@ public class QrCodeServiceImpl implements QrCodeService {
         File  file = new File(filePath);
         String url = null;
         if(file.exists()){
-            log.info(String.format("Uploading file to S3 service: Starting upload of %s", file.getAbsolutePath()));
             //choose bucket name and get fcm token
             try{
                 //upload file

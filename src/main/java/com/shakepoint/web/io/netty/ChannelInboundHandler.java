@@ -94,7 +94,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     private List<Purchase> createPurchases(String machineId) {
         //get products for machine
         List<Product> products = repository.getMachineAvailableProducts(machineId);
-        log.info(String.format("Creating %d for %d products", maxPrePurchases, products.size()));
+        log.info(String.format("Creating %d for %d products, also uploading QR images to S3 service", maxPrePurchases, products.size()));
         List<Purchase> purchases = new ArrayList();
         Purchase purchase;
         for (Product p : products) {
