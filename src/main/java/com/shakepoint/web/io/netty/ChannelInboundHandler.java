@@ -4,10 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.shakepoint.web.io.data.dto.req.socket.*;
 import com.shakepoint.web.io.data.dto.res.socket.PreAuthPurchase;
-import com.shakepoint.web.io.data.entity.MachineFail;
-import com.shakepoint.web.io.data.entity.Product;
-import com.shakepoint.web.io.data.entity.Purchase;
-import com.shakepoint.web.io.data.entity.PurchaseStatus;
+import com.shakepoint.web.io.data.dto.res.socket.ProductRecap;
+import com.shakepoint.web.io.data.entity.*;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import com.shakepoint.web.io.service.QrCodeService;
 import com.shakepoint.web.io.util.TransformationUtil;
@@ -142,7 +140,24 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             case MACHINE_FAIL:
                 dispatchMachineFailMessageType(cxt, request);
                 break;
+            case PRODUCT_RECAP:
+                dispatchMachineProductRecap(cxt, request);
+                break;
         }
+    }
+
+    private void dispatchMachineProductRecap(ChannelHandlerContext cxt, MachineMessage request) {
+        //get machine from connection
+        Machine machine = repository.getMachine(request.getMachineId());
+        //create a dto
+        List<ProductRecap> recaps = new ArrayList();
+        for (Product p : machine.getProducts()){
+            recaps.add(new ProductRecap(p.getId(), repository.getSlotNumber(machine.getId(), p.getId())));
+        }
+
+        //create a json response
+        String json = gson.toJson(recaps);
+        cxt.channel().writeAndFlush(json + "\n");
     }
 
     private void dispatchMachineFailMessageType(ChannelHandlerContext cxt, MachineMessage request) {

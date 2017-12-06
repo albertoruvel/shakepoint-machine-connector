@@ -6,6 +6,7 @@ public enum MachineMessageType {
     QR_CODE_EXCHANGE("qr_code_exchange"),
     PRODUCT_LEVEL_ALERT("product_level_alert"),
     MACHINE_FAIL("machine_fail"),
+    PRODUCT_RECAP("product_recap"),
     NOT_VALID("");
 
     String value;
@@ -25,6 +26,8 @@ public enum MachineMessageType {
             return PRODUCT_LEVEL_ALERT;
         }else if (value.equals(MACHINE_FAIL.value)){
             return MACHINE_FAIL;
+        }else if (value.equals(PRODUCT_RECAP.value)){
+            return PRODUCT_RECAP;
         }
         else return NOT_VALID;
     }

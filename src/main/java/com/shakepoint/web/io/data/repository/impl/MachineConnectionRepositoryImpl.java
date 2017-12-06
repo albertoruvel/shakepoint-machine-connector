@@ -26,6 +26,14 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     private final Logger log = Logger.getLogger(getClass());
 
     @Override
+    public int getSlotNumber(String machineId, String productId) {
+        return (Integer)em.createNativeQuery("SELECT slot_number FROM machine_product WHERE machine_id = ? AND product_id = ?")
+                .setParameter(1, machineId)
+                .setParameter(2, productId)
+                .getSingleResult();
+    }
+
+    @Override
     public Integer getProductEngineUseTime(String productId) {
         return ((Integer)em.createQuery("SELECT p.engineUseTime FROM Product p WHERE p.id = :id")
                 .setParameter("id", productId)
