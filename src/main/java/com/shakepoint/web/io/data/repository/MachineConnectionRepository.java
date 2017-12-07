@@ -80,4 +80,6 @@ public interface MachineConnectionRepository {
     void updateMachineConnectionStatus(String connectionId, boolean b);
     public void persistMachineFail(MachineFail fail);
     public Machine getMachine(String id);
+    String getTechnicianEmailByMachineId(final String machineId);
+    Product getProductById(String id);
 }

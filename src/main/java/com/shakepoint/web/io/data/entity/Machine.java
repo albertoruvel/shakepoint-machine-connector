@@ -9,6 +9,7 @@ public class Machine {
 
     @Id
     private String id;
+    private String name;
 
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "machine_product",
@@ -34,5 +35,13 @@ public class Machine {
 
     public void setProducts(List<Product> products) {
         this.products = products;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

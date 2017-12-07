@@ -9,6 +9,7 @@ public class MachineFail {
     @Id
     private String id;
     private String message;
+    @Column(name="fail_date")
     private String date;
 
     @ManyToOne(fetch = FetchType.EAGER)

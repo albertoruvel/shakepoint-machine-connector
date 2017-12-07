@@ -11,6 +11,7 @@ import com.shakepoint.web.io.data.entity.MachineConnection;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import com.shakepoint.web.io.netty.ConnectionInitializer;
 import com.shakepoint.web.io.service.ConnectorService;
+import com.shakepoint.web.io.service.EmailService;
 import com.shakepoint.web.io.service.QrCodeService;
 import com.shakepoint.web.io.util.TransformationUtil;
 import io.netty.bootstrap.ServerBootstrap;
@@ -29,18 +30,19 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
-@Singleton
 @Startup
+@Singleton
 public class ConnectorServiceImpl implements ConnectorService {
-
 
     @Inject
     private MachineConnectionRepository repository;
 
     @Inject
     private QrCodeService qrCodeService;
+
+    @Inject
+    private EmailService emailService;
 
     @Inject
     @ApplicationProperty(name = "com.shakepoint.web.io.port.range", type = ApplicationProperty.Types.SYSTEM)
@@ -124,7 +126,8 @@ public class ConnectorServiceImpl implements ConnectorService {
         log.info(String.format("Creating connection socket for %s", machine.getId()));
         bootstrap.group(acceptorGroup, handlerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new ConnectionInitializer(machine.getId(), repository, Integer.parseInt(maxPrepurchasesPerMachine), qrCodeService))
+                .childHandler(new ConnectionInitializer(machine.getId(), repository, Integer.parseInt(maxPrepurchasesPerMachine),
+                        qrCodeService, emailService))
                 .option(ChannelOption.SO_REUSEADDR, true)
                 .option(ChannelOption.SO_BACKLOG, 5)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
