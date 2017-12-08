@@ -2,11 +2,16 @@ package com.shakepoint.web.io.netty;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.shakepoint.web.io.data.dto.req.socket.*;
+import com.shakepoint.web.io.data.dto.req.socket.MachineFailMessage;
+import com.shakepoint.web.io.data.dto.req.socket.MachineMessage;
+import com.shakepoint.web.io.data.dto.req.socket.MachineMessageType;
+import com.shakepoint.web.io.data.dto.req.socket.ProductLevelMessage;
 import com.shakepoint.web.io.data.dto.res.socket.PreAuthPurchase;
 import com.shakepoint.web.io.data.dto.res.socket.ProductRecap;
 import com.shakepoint.web.io.data.entity.*;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
+import com.shakepoint.web.io.email.Email;
+import com.shakepoint.web.io.service.EmailService;
 import com.shakepoint.web.io.service.QrCodeService;
 import com.shakepoint.web.io.util.TransformationUtil;
 import io.netty.channel.ChannelHandlerContext;
@@ -14,9 +19,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 
 public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
@@ -25,30 +28,32 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     private final int maxPrePurchases;
     private final MachineConnectionRepository repository;
     private final QrCodeService qrCodeService;
+    private final EmailService emailService;
     private final Gson gson = new GsonBuilder().create();
     private Logger log = Logger.getLogger(getClass());
 
     public ChannelInboundHandler(String connectionId, MachineConnectionRepository repository,
-                                 int maxPrePurchases, QrCodeService qrCodeService) {
+                                 int maxPrePurchases, QrCodeService qrCodeService, EmailService emailService) {
         this.connectionId = connectionId;
         this.repository = repository;
         this.qrCodeService = qrCodeService;
         this.maxPrePurchases = maxPrePurchases;
+        this.emailService = emailService;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         MachineMessage request = null;
-        try{
+        try {
             String jsonMessage = (String) msg;
             request = gson.fromJson(jsonMessage, MachineMessage.class);
-        }catch(Exception ex){
-            dispatchNotValidMessageType(ctx);
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            dispatchNotValidMessageType(ctx, msg);
             return;
         }
 
         processMachineMessageRequest(ctx, request);
-
     }
 
     @Override
@@ -108,7 +113,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         return purchases;
     }
 
-    private Purchase createPurchase(String machineId, String productId){
+    private Purchase createPurchase(String machineId, String productId) {
         Purchase purchase = new Purchase();
         purchase.setMachineId(machineId);
         purchase.setProductId(productId);
@@ -118,8 +123,18 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         return purchase;
     }
 
-    private void dispatchNotValidMessageType(ChannelHandlerContext cxt) {
-        //TODO: send email to technician notifying that this should not happen
+    private void dispatchNotValidMessageType(ChannelHandlerContext cxt, Object msg) {
+        String technicianEmail =  repository.getTechnicianEmailByMachineId(connectionId);
+        if(technicianEmail == null){
+            //If we don't have a default technician, send to admin
+            technicianEmail = System.getProperty("com.shakepoint.web.admin.user");
+        }
+        final Machine m = repository.getMachine(connectionId);
+        final Map<String,Object> params = new HashMap<String, Object>();
+        params.put("message", String.valueOf(msg));
+        params.put("machineId", connectionId);
+        params.put("machineName", m.getName());
+        emailService.sendEmail(Email.MACHINE_RECEIVED_NO_VALID_MESSAGE, technicianEmail, params);
     }
 
     private void processMachineMessageRequest(ChannelHandlerContext cxt, MachineMessage request) {
@@ -152,7 +167,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         Machine machine = repository.getMachine(request.getMachineId());
         //create a dto
         List<ProductRecap> recaps = new ArrayList();
-        for (Product p : machine.getProducts()){
+        for (Product p : machine.getProducts()) {
             recaps.add(new ProductRecap(p.getId(), repository.getSlotNumber(machine.getId(), p.getId())));
         }
 
@@ -162,23 +177,51 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     }
 
     private void dispatchMachineFailMessageType(ChannelHandlerContext cxt, MachineMessage request) {
-        MachineFailMessage machineFailMessage = (MachineFailMessage)request.getMessage();
+        Map<String, String> machineFailMessage = (Map) request.getMessage();
         //machine fail, need to create entity to register
-        MachineFail fail = TransformationUtil.createMachineFail(machineFailMessage.getFailMessage(), machineFailMessage.getDate(),
+        MachineFail fail = TransformationUtil.createMachineFail(machineFailMessage.get("failMessage"), machineFailMessage.get("date"),
                 repository.getMachine(request.getMachineId()));
 
-        //TODO: send error email
+        Machine m = repository.getMachine(request.getMachineId());
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("machineId", request.getMachineId());
+        params.put("machineName", m.getName());
+        params.put("errorMessage", machineFailMessage.get("failMessage"));
+
+        String technicianEmail =  repository.getTechnicianEmailByMachineId(request.getMachineId());
+        if(technicianEmail == null){
+            //If we don't have a default technician, send to admin
+            technicianEmail = System.getProperty("com.shakepoint.web.admin.user");
+        }
+        emailService.sendEmail(Email.MACHINE_FAILED, technicianEmail, params);
+
         repository.persistMachineFail(fail);
     }
 
     private void dispatchProductLowLevelMessageType(ChannelHandlerContext cxt, MachineMessage request) {
-        ProductLevelMessage productLevelMessage = (ProductLevelMessage)request.getMessage();
-        if (productLevelMessage.getProductLevelType().equals("alert")){
+        Map<String, String> productLevelMessage = (Map) request.getMessage();
+        final Map<String, Object> params = new HashMap<String, Object>();
+
+        final Machine machine =repository.getMachine(connectionId);
+        final Product product = repository.getProductById(productLevelMessage.get("productId"));
+        params.put("productName", product.getName());
+        params.put("machineId", connectionId);
+        params.put("machineName", machine.getName());
+
+        String technicianEmail =  repository.getTechnicianEmailByMachineId(connectionId);
+        if(technicianEmail == null){
+            //If we don't have a default technician, send to admin
+            technicianEmail = System.getProperty("com.shakepoint.web.admin.user");
+        }
+
+        if (productLevelMessage.containsKey("productLevelType") &&
+                productLevelMessage.get("productLevelType").equals("alert")) {
             //levels are below 30%
-            //TODO: send email here to technician
-        }else if(productLevelMessage.getProductLevelType().equals("warning")){
+            emailService.sendEmail(Email.PRODUCT_LOW_LEVEL_ALERT, technicianEmail, params);
+        } else if (productLevelMessage.containsKey("productLevelType") &&
+                productLevelMessage.get("productLevelType").equals("warning")) {
             //levels are below 15%
-            //TODO: send email here to technician
+            emailService.sendEmail(Email.PRODUCT_LOW_LEVEL_CRITICAL, technicianEmail, params);
         }
     }
 
@@ -194,8 +237,8 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         cxt.channel().writeAndFlush(json + "\n");
     }
 
-    private List<PreAuthPurchase> exchangePurchases(MachineMessage request){
-        List<String> purchases = (ArrayList<String>)request.getMessage();
+    private List<PreAuthPurchase> exchangePurchases(MachineMessage request) {
+        List<String> purchases = (ArrayList<String>) request.getMessage();
         List<PreAuthPurchase> preAuthPurchases = new ArrayList();
         Purchase oldPurchase;
         Purchase newPurchase;

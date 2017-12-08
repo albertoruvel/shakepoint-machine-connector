@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.math.BigInteger;
 import java.util.List;
 
@@ -25,7 +26,6 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
 
     private final Logger log = Logger.getLogger(getClass());
 
-    @Override
     public int getSlotNumber(String machineId, String productId) {
         return (Integer)em.createNativeQuery("SELECT slot_number FROM machine_product WHERE machine_id = ? AND product_id = ?")
                 .setParameter(1, machineId)
@@ -33,7 +33,6 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
                 .getSingleResult();
     }
 
-    @Override
     public String getProductEngineUseTime(String productId) {
         Integer use =  (Integer)em.createQuery("SELECT p.engineUseTime FROM Product p WHERE p.id = :id")
                 .setParameter("id", productId)
@@ -41,7 +40,6 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
         return use.toString();
     }
 
-    @Override
     public boolean isPortAvailable(int port) {
         try {
             Long p = (Long) em.createQuery("SELECT COUNT(mc.port) FROM MachineConnection mc WHERE mc.port = :port")
@@ -53,7 +51,6 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
         }
     }
 
-    @Override
     public MachineConnection getConnection(String machineId) {
         try {
             return (MachineConnection) em.createQuery("SELECT mc FROM MachineConnection mc WHERE mc.machineId = :id")
@@ -63,7 +60,6 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
         }
     }
 
-    @Override
     public MachineConnection getConnectionById(String id) {
         try {
             return (MachineConnection) em.createQuery("SELECT mc FROM MachineConnection mc WHERE mc.id = :id")
@@ -75,7 +71,6 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     }
 
 
-    @Override
     public void createConnection(MachineConnection connection) {
         try {
             em.persist(connection);
@@ -85,12 +80,10 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     }
 
 
-    @Override
     public void closeAllConnections() {
         em.createQuery("UPDATE MachineConnection mc SET mc.connectionActive = false").executeUpdate();
     }
 
-    @Override
     public List<Purchase> getMachinePreAuthorizedPurchases(String machineId) {
         return em.createQuery("SELECT p FROM Purchase p WHERE p.status = :status AND p.machineId = :machineId")
                 .setParameter("status", PurchaseStatus.PRE_AUTH)
@@ -98,31 +91,23 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
                 .getResultList();
     }
 
-    @Override
     public List<Product> getMachineAvailableProducts(String machineId) {
         return em.createQuery("SELECT m.products FROM Machine m WHERE m.id = :machineId")
                 .setParameter("machineId", machineId).getResultList();
     }
 
-    @Override
     public void addPurchase(Purchase purchase) {
         em.persist(purchase);
     }
 
-    @Override
     public int removePreAuthorizedPurchases(String machineId) {
         List<Purchase> machinePurchases = getMachinePreAuthorizedPurchases(machineId);
         for (Purchase purchase : machinePurchases) {
             em.remove(purchase);
         }
-        /**return em.createNativeQuery("DELETE FROM purchase WHERE status = ? and machine_id = ?")
-         .setParameter(1, PurchaseStatus.PRE_AUTH)
-         .setParameter(2, machineId)
-         .executeUpdate();**/
         return machinePurchases.size();
     }
 
-    @Override
     public void updatePurchaseStatus(String purchaseId, PurchaseStatus cashed) {
         em.createQuery("UPDATE Purchase p SET p.status = :status WHERE p.id = :id")
                 .setParameter("status", cashed)
@@ -130,30 +115,25 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
                 .executeUpdate();
     }
 
-    @Override
     public Purchase getPurchase(String purchaseId) {
         return em.find(Purchase.class, purchaseId);
     }
 
-    @Override
     public List<Machine> getMachines() {
         return em.createQuery("SELECT m FROM Machine m")
                 .getResultList();
     }
 
-    @Override
     public void updateMachineConnectionStatus(String connectionId, boolean b) {
         em.createQuery("UPDATE MachineConnection mc SET mc.connectionActive = :value")
                 .setParameter("value", b)
                 .executeUpdate();
     }
 
-    @Override
     public void persistMachineFail(MachineFail fail) {
         em.persist(fail);
     }
 
-    @Override
     public Machine getMachine(String id) {
         try{
             return (Machine)em.createQuery("SELECT m FROM Machine m WHERE m.id = :id")
@@ -162,5 +142,15 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
         }catch(NoResultException ex){
             return null;
         }
+    }
+
+    public String getTechnicianEmailByMachineId(final String machineId){
+        Query query = em.createNativeQuery("select distinct u.email from machine m inner join user u on u.id = m.technician_id  where m.id = :machineId");
+        query.setParameter("machineId", machineId);
+        return (String)query.getSingleResult();
+    }
+
+    public Product getProductById(String id){
+        return em.find(Product.class, id);
     }
 }
