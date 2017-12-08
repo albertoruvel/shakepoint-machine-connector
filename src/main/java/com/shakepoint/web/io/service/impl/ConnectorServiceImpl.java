@@ -74,15 +74,18 @@ public class ConnectorServiceImpl implements ConnectorService {
         }
     }
 
+    @Override
+    public void createConnection(String machineId)throws InterruptedException{
+        NioEventLoopGroup acceptorGroup = new NioEventLoopGroup(1);
+        NioEventLoopGroup handlerGroup = new NioEventLoopGroup(1);
+        startConnection(acceptorGroup, handlerGroup, machineId);
+    }
+
 
     private void createConnections(List<Machine> machines) {
-        NioEventLoopGroup acceptorGroup;
-        NioEventLoopGroup handlerGroup;
         try {
             for (Machine machine : machines) {
-                acceptorGroup = new NioEventLoopGroup(1);
-                handlerGroup = new NioEventLoopGroup(1);
-                startConnection(acceptorGroup, handlerGroup, machine);
+                createConnection(machine.getId());
             }
         } catch (InterruptedException ex) {
             log.error("Interrupted while creating netty bootstrap", ex);
@@ -110,21 +113,21 @@ public class ConnectorServiceImpl implements ConnectorService {
 
     }
 
-    private ChannelFuture startConnection(NioEventLoopGroup acceptorGroup, NioEventLoopGroup handlerGroup, Machine machine) throws InterruptedException {
-        MachineConnection connection = repository.getConnection(machine.getId());
+    private ChannelFuture startConnection(NioEventLoopGroup acceptorGroup, NioEventLoopGroup handlerGroup, String machineId) throws InterruptedException {
+        MachineConnection connection = repository.getConnection(machineId);
         if (connection == null) {
             //create a new one
-            connection = TransformationUtil.createMachineConnection(machine.getId(), getFromPort(), getToPort());
+            connection = TransformationUtil.createMachineConnection(machineId, getFromPort(), getToPort());
             while (!repository.isPortAvailable(connection.getPort())) {
-                connection = TransformationUtil.createMachineConnection(machine.getId(), getFromPort(), getToPort());
+                connection = TransformationUtil.createMachineConnection(machineId, getFromPort(), getToPort());
             }
             repository.createConnection(connection);
         }
         ServerBootstrap bootstrap = new ServerBootstrap();
-        log.info(String.format("Creating connection socket for %s", machine.getId()));
+        log.info(String.format("Creating connection socket for %s", machineId));
         bootstrap.group(acceptorGroup, handlerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new ConnectionInitializer(machine.getId(), repository, Integer.parseInt(maxPrepurchasesPerMachine), qrCodeService))
+                .childHandler(new ConnectionInitializer(machineId, repository, Integer.parseInt(maxPrepurchasesPerMachine), qrCodeService))
                 .option(ChannelOption.SO_REUSEADDR, true)
                 .option(ChannelOption.SO_BACKLOG, 5)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
