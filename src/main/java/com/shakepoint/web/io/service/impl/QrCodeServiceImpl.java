@@ -8,7 +8,9 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.github.roar109.syring.annotation.ApplicationProperty;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -30,6 +32,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
+import java.util.Iterator;
 
 @Startup
 @Stateless
@@ -107,6 +110,29 @@ public class QrCodeServiceImpl implements QrCodeService {
         } catch (IOException e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    public void deleteAllQrCodes() {
+        try{
+            ObjectListing objectListing = amazonS3.listObjects(bucketName);
+            while(true){
+                for (Iterator<?> iterator =
+                     objectListing.getObjectSummaries().iterator();
+                     iterator.hasNext();) {
+                    S3ObjectSummary summary = (S3ObjectSummary)iterator.next();
+                    amazonS3.deleteObject(bucketName, summary.getKey());
+                }
+
+                // more object_listing to retrieve?
+                if (objectListing.isTruncated()) {
+                    objectListing= amazonS3.listNextBatchOfObjects(objectListing);
+                } else {
+                    break;
+                }
+            }
+        }catch(Exception ex){
+            log.error("Could not empty bucket", ex);
         }
     }
 
