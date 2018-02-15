@@ -9,8 +9,8 @@ import javax.jms.MessageListener;
 
 @TransactionManagement(TransactionManagementType.BEAN)
 @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-@MessageDriven(name = "DummyMDB", activationConfig = {
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "machine_connection"),
+@MessageDriven(name = "DeleteS3MDB", activationConfig = {
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "delete_media_content"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge") })
 public class DeleteS3MDB implements MessageListener{
@@ -19,6 +19,6 @@ public class DeleteS3MDB implements MessageListener{
     QrCodeService qrCodeService;
 
     public void onMessage(Message message) {
-
+        qrCodeService.deleteAllQrCodes();
     }
 }
