@@ -114,6 +114,7 @@ public class QrCodeServiceImpl implements QrCodeService {
     }
 
     public void deleteAllQrCodes() {
+        log.info("Will try to delete everything on bucket...");
         try{
             ObjectListing objectListing = amazonS3.listObjects(bucketName);
             while(true){
