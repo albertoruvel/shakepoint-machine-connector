@@ -246,9 +246,14 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             //change purchase status to cashed
             repository.updatePurchaseStatus(purchaseId, PurchaseStatus.CASHED);
             oldPurchase = repository.getPurchase(purchaseId);
-            //create a new purchase
-            newPurchase = createPurchase(request.getMachineId(), oldPurchase.getProductId());
-            preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId())));
+            if (oldPurchase == null){
+                log.error(String.format("No purchase found with ID %s", purchaseId));
+            }else {
+                //create a new purchase
+                newPurchase = createPurchase(request.getMachineId(), oldPurchase.getProductId());
+                preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId())));
+            }
+
         }
         return preAuthPurchases;
     }
