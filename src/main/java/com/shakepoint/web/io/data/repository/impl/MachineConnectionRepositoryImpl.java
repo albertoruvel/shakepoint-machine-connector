@@ -103,7 +103,7 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     public int removePreAuthorizedPurchases(String machineId) {
         List<Purchase> machinePurchases = getMachinePreAuthorizedPurchases(machineId);
         for (Purchase purchase : machinePurchases) {
-            purchase.setStatus(PurchaseStatus.CANCELLED);
+            //purchase.setStatus(PurchaseStatus.CANCELLED);
             em.merge(purchase);
         }
         return machinePurchases.size();
@@ -153,5 +153,15 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
 
     public Product getProductById(String id){
         return em.find(Product.class, id);
+    }
+
+    @Override
+    public int getNeededPurchasesByProductOnMachine(String productId, String machineId, int maxPurchasesNumber) {
+        Integer currentPurchases = (Integer)em.createQuery("SELECT COUNT(p.id) FROM Purchase p WHERE p.product.id = :productId AND p.machine.id = :machineId AND p.status = :status")
+                .setParameter("productId", productId)
+                .setParameter("machineId", machineId)
+                .setParameter("status", PurchaseStatus.PRE_AUTH)
+                .getSingleResult();
+        return maxPurchasesNumber - currentPurchases;
     }
 }

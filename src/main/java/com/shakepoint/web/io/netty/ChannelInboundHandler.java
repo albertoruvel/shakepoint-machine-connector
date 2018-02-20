@@ -77,14 +77,24 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
 
         //check for existing purchases with status pre_auth
         List<Purchase> machinePurchases = repository.getMachinePreAuthorizedPurchases(machineId);
+        List<Product> availableProducts = repository.getMachineAvailableProducts(request.getMachineId());
         List<PreAuthPurchase> preAuthPurchases = new ArrayList();
         if (machinePurchases.isEmpty()) {
             log.info(String.format("Creating new pre authorized purchases for machine %s", machineId));
             //create N purchases
             preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(createPurchases(machineId), repository));
         } else {
-            int removedPurchases = repository.removePreAuthorizedPurchases(machineId);
-            log.info(String.format("%d pre authorized purchases have been removed to create new ones", removedPurchases));
+
+
+            for (Product p : availableProducts) {
+                //get needed purchases for this product on machine
+                int neededPurchases = repository.getNeededPurchasesByProductOnMachine(p.getId(), machineId, maxPrePurchases);
+                for (int j = 0; j < neededPurchases; j ++){
+                    Purchase purchase = createPurchase(machineId, p.getId());
+                    repository.addPurchase(purchase);
+                    preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(purchase, String.valueOf(p.getEngineUseTime())));
+                }
+            }
             //create (maxPrePurchases - size) purchases
             preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(
                     createPurchases(machineId), repository));
@@ -124,13 +134,13 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     }
 
     private void dispatchNotValidMessageType(ChannelHandlerContext cxt, Object msg) {
-        String technicianEmail =  repository.getTechnicianEmailByMachineId(connectionId);
-        if(technicianEmail == null){
+        String technicianEmail = repository.getTechnicianEmailByMachineId(connectionId);
+        if (technicianEmail == null) {
             //If we don't have a default technician, send to admin
             technicianEmail = System.getProperty("com.shakepoint.web.admin.user");
         }
         final Machine m = repository.getMachine(connectionId);
-        final Map<String,Object> params = new HashMap<String, Object>();
+        final Map<String, Object> params = new HashMap<String, Object>();
         params.put("message", String.valueOf(msg));
         params.put("machineId", connectionId);
         params.put("machineName", m.getName());
@@ -188,8 +198,8 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         params.put("machineName", m.getName());
         params.put("errorMessage", machineFailMessage.get("failMessage"));
 
-        String technicianEmail =  repository.getTechnicianEmailByMachineId(request.getMachineId());
-        if(technicianEmail == null){
+        String technicianEmail = repository.getTechnicianEmailByMachineId(request.getMachineId());
+        if (technicianEmail == null) {
             //If we don't have a default technician, send to admin
             technicianEmail = System.getProperty("com.shakepoint.web.admin.user");
         }
@@ -202,14 +212,14 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         Map<String, String> productLevelMessage = (Map) request.getMessage();
         final Map<String, Object> params = new HashMap<String, Object>();
 
-        final Machine machine =repository.getMachine(connectionId);
+        final Machine machine = repository.getMachine(connectionId);
         final Product product = repository.getProductById(productLevelMessage.get("productId"));
         params.put("productName", product.getName());
         params.put("machineId", connectionId);
         params.put("machineName", machine.getName());
 
-        String technicianEmail =  repository.getTechnicianEmailByMachineId(connectionId);
-        if(technicianEmail == null){
+        String technicianEmail = repository.getTechnicianEmailByMachineId(connectionId);
+        if (technicianEmail == null) {
             //If we don't have a default technician, send to admin
             technicianEmail = System.getProperty("com.shakepoint.web.admin.user");
         }
@@ -247,9 +257,9 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             //change purchase status to cashed
             repository.updatePurchaseStatus(purchaseId, PurchaseStatus.CASHED);
             oldPurchase = repository.getPurchase(purchaseId);
-            if (oldPurchase == null){
+            if (oldPurchase == null) {
                 log.error(String.format("No purchase found with ID %s", purchaseId));
-            }else {
+            } else {
                 //create a new purchase
                 newPurchase = createPurchase(request.getMachineId(), oldPurchase.getProductId());
                 preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId())));
