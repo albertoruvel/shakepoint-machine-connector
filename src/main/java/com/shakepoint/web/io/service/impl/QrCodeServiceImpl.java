@@ -143,7 +143,6 @@ public class QrCodeServiceImpl implements QrCodeService {
         if(file.exists()){
             //choose bucket name and get fcm token
             try{
-                log.info("Uploading file to S3 service...");
                 //upload file
                 final PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, file.getName(), file);
                 putObjectRequest.setCannedAcl(CannedAccessControlList.PublicRead);

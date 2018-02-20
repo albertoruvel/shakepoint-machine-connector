@@ -130,6 +130,8 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         purchase.setPurchaseDate(TransformationUtil.DATE_FORMAT.format(new Date()));
         purchase.setStatus(PurchaseStatus.PRE_AUTH);
         purchase.setQrCodeUrl(qrCodeService.createQrCode(purchase));
+        Product p = repository.getProductById(productId);
+        purchase.setTotal(p.getPrice());
         return purchase;
     }
 
