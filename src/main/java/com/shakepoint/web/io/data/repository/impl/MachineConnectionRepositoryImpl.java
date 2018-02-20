@@ -157,11 +157,11 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
 
     @Override
     public int getNeededPurchasesByProductOnMachine(String productId, String machineId, int maxPurchasesNumber) {
-        Integer currentPurchases = (Integer)em.createQuery("SELECT COUNT(p.id) FROM Purchase p WHERE p.productId = :productId AND p.machineId = :machineId AND p.status = :status")
+        Long currentPurchases = (Long)em.createQuery("SELECT COUNT(p.id) FROM Purchase p WHERE p.productId = :productId AND p.machineId = :machineId AND p.status = :status")
                 .setParameter("productId", productId)
                 .setParameter("machineId", machineId)
                 .setParameter("status", PurchaseStatus.PRE_AUTH)
                 .getSingleResult();
-        return maxPurchasesNumber - currentPurchases;
+        return maxPurchasesNumber - currentPurchases.intValue();
     }
 }
