@@ -243,6 +243,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         Purchase oldPurchase;
         Purchase newPurchase;
         for (String purchaseId : purchases) {
+            //check if
             //change purchase status to cashed
             repository.updatePurchaseStatus(purchaseId, PurchaseStatus.CASHED);
             oldPurchase = repository.getPurchase(purchaseId);
