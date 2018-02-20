@@ -54,7 +54,7 @@ public class ConnectorServiceImpl implements ConnectorService {
 
     @Inject
     @ApplicationProperty(name = "com.shakepoint.web.io.maxBufferUsage", type = ApplicationProperty.Types.SYSTEM)
-    private int maxBufferUsage;
+    private String maxBufferUsage;
 
 
     private final Logger log = Logger.getLogger(getClass());
@@ -133,7 +133,7 @@ public class ConnectorServiceImpl implements ConnectorService {
         log.info(String.format("Creating connection socket for %s", machineId));
         bootstrap.group(acceptorGroup, handlerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new ConnectionInitializer(machineId, repository, Integer.parseInt(maxPrepurchasesPerMachine), qrCodeService, emailService, maxBufferUsage))
+                .childHandler(new ConnectionInitializer(machineId, repository, Integer.parseInt(maxPrepurchasesPerMachine), qrCodeService, emailService, Integer.parseInt(maxBufferUsage)))
                 .option(ChannelOption.SO_REUSEADDR, true)
                 .option(ChannelOption.SO_BACKLOG, 5)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
