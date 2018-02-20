@@ -52,6 +52,10 @@ public class ConnectorServiceImpl implements ConnectorService {
     @ApplicationProperty(name = "com.shakepoint.web.io.machine.max.prepurchases", type = ApplicationProperty.Types.SYSTEM)
     private String maxPrepurchasesPerMachine;
 
+    @Inject
+    @ApplicationProperty(name = "com.shakepoint.web.io.maxBufferUsage", type = ApplicationProperty.Types.SYSTEM)
+    private int maxBufferUsage;
+
 
     private final Logger log = Logger.getLogger(getClass());
     private final List<ChannelFuture> openConnections = Collections.synchronizedList(new ArrayList());
@@ -129,7 +133,7 @@ public class ConnectorServiceImpl implements ConnectorService {
         log.info(String.format("Creating connection socket for %s", machineId));
         bootstrap.group(acceptorGroup, handlerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new ConnectionInitializer(machineId, repository, Integer.parseInt(maxPrepurchasesPerMachine), qrCodeService, emailService))
+                .childHandler(new ConnectionInitializer(machineId, repository, Integer.parseInt(maxPrepurchasesPerMachine), qrCodeService, emailService, maxBufferUsage))
                 .option(ChannelOption.SO_REUSEADDR, true)
                 .option(ChannelOption.SO_BACKLOG, 5)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)

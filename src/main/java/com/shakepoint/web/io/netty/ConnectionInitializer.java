@@ -20,20 +20,22 @@ public class ConnectionInitializer extends ChannelInitializer<SocketChannel> {
     private final QrCodeService qrCodeService;
     private final EmailService emailService;
     private Logger log = Logger.getLogger(getClass());
+    private int maxBufferUsage;
 
     public ConnectionInitializer(String connectionId, MachineConnectionRepository repository, int maxPrePurchases, QrCodeService service,
-                                 EmailService emailService) {
+                                 EmailService emailService, int maxBufferUsage) {
         this.connectionId = connectionId;
         this.repository = repository;
         this.maxPrePurchases = maxPrePurchases;
         this.qrCodeService = service;
         this.emailService = emailService;
+        this.maxBufferUsage = maxBufferUsage;
     }
 
     protected void initChannel(SocketChannel socketChannel) throws Exception {
         log.info(String.format("Initializing channel for connection %s", connectionId));
         ChannelPipeline pipeline = socketChannel.pipeline();
-        pipeline.addLast(LineBasedFrameDecoder.class.getName(), new LineBasedFrameDecoder(2048));
+        pipeline.addLast(LineBasedFrameDecoder.class.getName(), new LineBasedFrameDecoder(maxBufferUsage));
         pipeline.addLast(StringDecoder.class.getName(), new StringDecoder(CharsetUtil.UTF_8));
         pipeline.addLast(StringEncoder.class.getName(), new StringEncoder(CharsetUtil.UTF_8));
         pipeline.addLast("handler", new ChannelInboundHandler(connectionId, repository, maxPrePurchases, qrCodeService, emailService));
