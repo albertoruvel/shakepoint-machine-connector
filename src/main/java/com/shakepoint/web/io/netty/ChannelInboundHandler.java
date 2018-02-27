@@ -265,6 +265,8 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                 //create a new purchase
                 newPurchase = createPurchase(request.getMachineId(), oldPurchase.getProductId());
                 log.info(String.format("Exchanging old purchase %s for new purchase %s", oldPurchase.getId(), newPurchase.getId()));
+                repository.addPurchase(newPurchase);
+                log.info("Purchase have been exchanged successfully");
                 preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId())));
             }
 
