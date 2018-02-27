@@ -103,7 +103,7 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     public int removePreAuthorizedPurchases(String machineId) {
         List<Purchase> machinePurchases = getMachinePreAuthorizedPurchases(machineId);
         for (Purchase purchase : machinePurchases) {
-            //purchase.setStatus(PurchaseStatus.CANCELLED);
+
             em.merge(purchase);
         }
         return machinePurchases.size();
