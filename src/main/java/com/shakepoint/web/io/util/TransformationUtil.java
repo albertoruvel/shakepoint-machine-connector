@@ -15,7 +15,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class TransformationUtil {
 
-    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("mm/dd/yyyy hh:mm:ss a");
+    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss a");
 
     private static Logger log = Logger.getLogger(TransformationUtil.class);
 
