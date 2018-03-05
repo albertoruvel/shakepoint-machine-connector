@@ -17,6 +17,10 @@ public class TransformationUtil {
 
     public static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss a");
 
+    static {
+        DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT-7"));
+    }
+
     private static Logger log = Logger.getLogger(TransformationUtil.class);
 
     public static Collection<PreAuthPurchase> createPreAuthPurchases(List<Purchase> purchases, MachineConnectionRepository repository) {
@@ -29,16 +33,16 @@ public class TransformationUtil {
     }
 
     public static PreAuthPurchase createPreAuthPurchase(Purchase purchase, String engineUseTime) {
-        try{
+        try {
             Long useTime = Long.parseLong(engineUseTime);
             return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), useTime);
-        }catch(Exception ex){
+        } catch (Exception ex) {
             return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), 0L);
         }
 
     }
 
-    public static MachineConnection createMachineConnection(String machineId, int fromPort, int toPort){
+    public static MachineConnection createMachineConnection(String machineId, int fromPort, int toPort) {
         int randomPort = ThreadLocalRandom.current().nextInt(fromPort, toPort + 1);
         MachineConnection connection = new MachineConnection();
         connection.setConnectionActive(false);
