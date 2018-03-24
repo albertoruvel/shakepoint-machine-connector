@@ -82,5 +82,6 @@ public interface MachineConnectionRepository {
     public Machine getMachine(String id);
     String getTechnicianEmailByMachineId(final String machineId);
     Product getProductById(String id);
+    public void updateProductNutritionalDataUrl(String productId, String url);
     public int getNeededPurchasesByProductOnMachine(String productId, String machineId, int maxPurchasesNumber);
 }

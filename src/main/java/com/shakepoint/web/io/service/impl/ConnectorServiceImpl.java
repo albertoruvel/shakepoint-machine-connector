@@ -1,18 +1,14 @@
 package com.shakepoint.web.io.service.impl;
 
 import com.github.roar109.syring.annotation.ApplicationProperty;
-import com.shakepoint.web.io.data.dto.res.MachineConnectionResponse;
 import com.shakepoint.web.io.data.dto.res.MachineConnectionStatusResponse;
-import com.shakepoint.web.io.data.dto.req.NewMachineConnectionRequest;
-import com.shakepoint.web.io.data.dto.res.PrePurchaseResponse;
-import com.shakepoint.web.io.data.dto.res.PrePurchasesResponse;
 import com.shakepoint.web.io.data.entity.Machine;
 import com.shakepoint.web.io.data.entity.MachineConnection;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import com.shakepoint.web.io.netty.ConnectionInitializer;
 import com.shakepoint.web.io.service.ConnectorService;
 import com.shakepoint.web.io.service.EmailService;
-import com.shakepoint.web.io.service.QrCodeService;
+import com.shakepoint.web.io.service.AWSS3Service;
 import com.shakepoint.web.io.util.TransformationUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -27,8 +23,6 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.*;
 
 @Startup
@@ -39,7 +33,7 @@ public class ConnectorServiceImpl implements ConnectorService {
     private MachineConnectionRepository repository;
 
     @Inject
-    private QrCodeService qrCodeService;
+    private AWSS3Service AWSS3Service;
 
     @Inject
     private EmailService emailService;
@@ -133,7 +127,7 @@ public class ConnectorServiceImpl implements ConnectorService {
         log.info(String.format("Creating connection socket for %s", machineId));
         bootstrap.group(acceptorGroup, handlerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new ConnectionInitializer(machineId, repository, Integer.parseInt(maxPrepurchasesPerMachine), qrCodeService, emailService, Integer.parseInt(maxBufferUsage)))
+                .childHandler(new ConnectionInitializer(machineId, repository, Integer.parseInt(maxPrepurchasesPerMachine), AWSS3Service, emailService, Integer.parseInt(maxBufferUsage)))
                 .option(ChannelOption.SO_REUSEADDR, true)
                 .option(ChannelOption.SO_BACKLOG, 5)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)

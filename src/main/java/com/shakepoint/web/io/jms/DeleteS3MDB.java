@@ -1,6 +1,6 @@
 package com.shakepoint.web.io.jms;
 
-import com.shakepoint.web.io.service.QrCodeService;
+import com.shakepoint.web.io.service.AWSS3Service;
 
 import javax.ejb.*;
 import javax.inject.Inject;
@@ -16,9 +16,9 @@ import javax.jms.MessageListener;
 public class DeleteS3MDB implements MessageListener{
 
     @Inject
-    QrCodeService qrCodeService;
+    AWSS3Service AWSS3Service;
 
     public void onMessage(Message message) {
-        qrCodeService.deleteAllQrCodes();
+        AWSS3Service.deleteAllQrCodes();
     }
 }

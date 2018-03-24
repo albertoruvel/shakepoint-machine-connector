@@ -19,7 +19,8 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.shakepoint.web.io.data.entity.Purchase;
-import com.shakepoint.web.io.service.QrCodeService;
+import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
+import com.shakepoint.web.io.service.AWSS3Service;
 import org.apache.log4j.Logger;
 
 import javax.annotation.PostConstruct;
@@ -36,7 +37,7 @@ import java.util.Iterator;
 
 @Startup
 @Stateless
-public class QrCodeServiceImpl implements QrCodeService {
+public class AWSS3ServiceImpl implements AWSS3Service {
 
     @Inject
     @ApplicationProperty(name = "com.shakepoint.web.io.qrcode.dir", type = ApplicationProperty.Types.SYSTEM)
@@ -52,13 +53,26 @@ public class QrCodeServiceImpl implements QrCodeService {
 
     @Inject
     @ApplicationProperty(name = "com.shakepoint.web.s3.qr.bucket.name", type = ApplicationProperty.Types.SYSTEM)
-    private String bucketName;
+    private String qrCodeBucketName;
+
+    @Inject
+    @ApplicationProperty(name = "com.shakepoint.web.s3.nutritional.bucket.name", type = ApplicationProperty.Types.SYSTEM)
+    private String nutritionalDataBucketName;
+
+    @Inject
+    @ApplicationProperty(name = "com.shakepoint.web.nutritional.tmp", type = ApplicationProperty.Types.SYSTEM)
+    private String nutritionalDataTmpFolder;
+
+    @Inject
+    private MachineConnectionRepository repository;
 
     private AmazonS3 amazonS3;
 
     private static final String S3_FORMAT = "https://%s.s3.amazonaws.com/%s";
-    private static final Logger log = Logger.getLogger(QrCodeService.class);
+    private static final Logger log = Logger.getLogger(AWSS3Service.class);
     private final String qrCodeDataFormat = "%s_%s_%s_%s"; //purchase_machine_product_id
+
+
 
     @PostConstruct
     public void init(){
@@ -71,6 +85,17 @@ public class QrCodeServiceImpl implements QrCodeService {
 
             }
         });
+    }
+
+    @Override
+    public void createProductNutritionalData(String productId) {
+        File file = new File(nutritionalDataTmpFolder + File.separator + productId + ".jpg");
+        if (file.exists()){
+            String url =  uploadFile(file.getAbsolutePath(), S3ImageType.NUTRITIONAL_DATA);
+            repository.updateProductNutritionalDataUrl(productId, url);
+        }else{
+            log.error("Nutritional data image not found for id " + productId);
+        }
     }
 
     @Override
@@ -103,7 +128,7 @@ public class QrCodeServiceImpl implements QrCodeService {
                 }
             }
             ImageIO.write(image, "png", file);
-            return uploadFile(file.getAbsolutePath());
+            return uploadFile(file.getAbsolutePath(), S3ImageType.QR_CODE);
         } catch (WriterException e) {
             e.printStackTrace();
             return null;
@@ -116,13 +141,13 @@ public class QrCodeServiceImpl implements QrCodeService {
     public void deleteAllQrCodes() {
         log.info("Will try to delete everything on bucket...");
         try{
-            ObjectListing objectListing = amazonS3.listObjects(bucketName);
+            ObjectListing objectListing = amazonS3.listObjects(qrCodeBucketName);
             while(true){
                 for (Iterator<?> iterator =
                      objectListing.getObjectSummaries().iterator();
                      iterator.hasNext();) {
                     S3ObjectSummary summary = (S3ObjectSummary)iterator.next();
-                    amazonS3.deleteObject(bucketName, summary.getKey());
+                    amazonS3.deleteObject(qrCodeBucketName, summary.getKey());
                 }
 
                 // more object_listing to retrieve?
@@ -137,12 +162,24 @@ public class QrCodeServiceImpl implements QrCodeService {
         }
     }
 
-    private String uploadFile(String filePath){
+    private String uploadFile(String filePath, S3ImageType imageType){
         File  file = new File(filePath);
         String url = null;
         if(file.exists()){
             //choose bucket name and get fcm token
             try{
+                String bucketName = null;
+                switch(imageType){
+                    case NUTRITIONAL_DATA:
+                        bucketName = nutritionalDataBucketName;
+                        break;
+                    case QR_CODE:
+                        bucketName = qrCodeBucketName;
+                        break;
+                    default:
+                        log.error("Invalid bucket name option");
+                        return null;
+                }
                 //upload file
                 final PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, file.getName(), file);
                 putObjectRequest.setCannedAcl(CannedAccessControlList.PublicRead);
@@ -165,5 +202,9 @@ public class QrCodeServiceImpl implements QrCodeService {
             log.error(String.format("Cannot upload file to S3 service: File %s does not exists on %s", file.getAbsolutePath(), tmpFolder));
         }
         return url;
+    }
+
+    public static enum S3ImageType{
+        QR_CODE, NUTRITIONAL_DATA
     }
 }

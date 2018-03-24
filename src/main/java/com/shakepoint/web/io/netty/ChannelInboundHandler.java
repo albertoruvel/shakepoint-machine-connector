@@ -2,17 +2,15 @@ package com.shakepoint.web.io.netty;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.shakepoint.web.io.data.dto.req.socket.MachineFailMessage;
 import com.shakepoint.web.io.data.dto.req.socket.MachineMessage;
 import com.shakepoint.web.io.data.dto.req.socket.MachineMessageType;
-import com.shakepoint.web.io.data.dto.req.socket.ProductLevelMessage;
 import com.shakepoint.web.io.data.dto.res.socket.PreAuthPurchase;
 import com.shakepoint.web.io.data.dto.res.socket.ProductRecap;
 import com.shakepoint.web.io.data.entity.*;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import com.shakepoint.web.io.email.Email;
 import com.shakepoint.web.io.service.EmailService;
-import com.shakepoint.web.io.service.QrCodeService;
+import com.shakepoint.web.io.service.AWSS3Service;
 import com.shakepoint.web.io.util.TransformationUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -27,16 +25,16 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     private final String connectionId;
     private final int maxPrePurchases;
     private final MachineConnectionRepository repository;
-    private final QrCodeService qrCodeService;
+    private final AWSS3Service AWSS3Service;
     private final EmailService emailService;
     private final Gson gson = new GsonBuilder().create();
     private Logger log = Logger.getLogger(getClass());
 
     public ChannelInboundHandler(String connectionId, MachineConnectionRepository repository,
-                                 int maxPrePurchases, QrCodeService qrCodeService, EmailService emailService) {
+                                 int maxPrePurchases, AWSS3Service AWSS3Service, EmailService emailService) {
         this.connectionId = connectionId;
         this.repository = repository;
-        this.qrCodeService = qrCodeService;
+        this.AWSS3Service = AWSS3Service;
         this.maxPrePurchases = maxPrePurchases;
         this.emailService = emailService;
     }
@@ -129,7 +127,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         purchase.setProductId(productId);
         purchase.setPurchaseDate(TransformationUtil.DATE_FORMAT.format(new Date()));
         purchase.setStatus(PurchaseStatus.PRE_AUTH);
-        purchase.setQrCodeUrl(qrCodeService.createQrCode(purchase));
+        purchase.setQrCodeUrl(AWSS3Service.createQrCode(purchase));
         Product p = repository.getProductById(productId);
         purchase.setTotal(p.getPrice());
         return purchase;

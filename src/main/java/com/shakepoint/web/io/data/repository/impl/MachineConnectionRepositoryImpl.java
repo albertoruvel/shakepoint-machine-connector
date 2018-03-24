@@ -2,7 +2,7 @@ package com.shakepoint.web.io.data.repository.impl;
 
 import com.shakepoint.web.io.data.entity.*;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
-import com.shakepoint.web.io.service.QrCodeService;
+import com.shakepoint.web.io.service.AWSS3Service;
 import org.apache.log4j.Logger;
 
 import javax.ejb.Stateless;
@@ -11,7 +11,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.math.BigInteger;
 import java.util.List;
 
 @Stateless
@@ -22,7 +21,7 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     private EntityManager em;
 
     @Inject
-    private QrCodeService qrCodeService;
+    private AWSS3Service AWSS3Service;
 
     private final Logger log = Logger.getLogger(getClass());
 
@@ -153,6 +152,13 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
 
     public Product getProductById(String id){
         return em.find(Product.class, id);
+    }
+
+    @Override
+    public void updateProductNutritionalDataUrl(String productId, String url) {
+        em.createQuery("UPDATE Product p SET p.nutritionalDataUrl = :url WHERE p.id = :productId")
+                .setParameter("url", url)
+                .setParameter("productId", productId).executeUpdate();
     }
 
     @Override

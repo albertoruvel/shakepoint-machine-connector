@@ -24,6 +24,9 @@ public class Product {
     @Column(name = "engine_use_time")
     private Integer engineUseTime;
 
+    @Column(name = "nutritional_data_url")
+    private String nutritionalDataUrl;
+
     public Product() {
     }
 
@@ -65,5 +68,13 @@ public class Product {
 
     public void setEngineUseTime(Integer engineUseTime) {
         this.engineUseTime = engineUseTime;
+    }
+
+    public String getNutritionalDataUrl() {
+        return nutritionalDataUrl;
+    }
+
+    public void setNutritionalDataUrl(String nutritionalDataUrl) {
+        this.nutritionalDataUrl = nutritionalDataUrl;
     }
 }
