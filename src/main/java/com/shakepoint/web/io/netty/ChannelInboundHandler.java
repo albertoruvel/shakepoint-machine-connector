@@ -78,12 +78,8 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         List<Product> availableProducts = repository.getMachineAvailableProducts(request.getMachineId());
         List<PreAuthPurchase> preAuthPurchases = new ArrayList();
         if (machinePurchases.isEmpty()) {
-            log.info(String.format("Creating new pre authorized purchases for machine %s", machineId));
-            //create N purchases
             preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(createPurchases(machineId), repository));
         } else {
-
-
             for (Product p : availableProducts) {
                 //get needed purchases for this product on machine
                 int neededPurchases = repository.getNeededPurchasesByProductOnMachine(p.getId(), machineId, maxPrePurchases);
@@ -108,7 +104,6 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     private List<Purchase> createPurchases(String machineId) {
         //get products for machine
         List<Product> products = repository.getMachineAvailableProducts(machineId);
-        log.info(String.format("Creating %d for %d products, also uploading QR images to S3 service", maxPrePurchases, products.size()));
         List<Purchase> purchases = new ArrayList();
         Purchase purchase;
         for (Product p : products) {
@@ -269,9 +264,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             } else {
                 //create a new purchase
                 newPurchase = createPurchase(request.getMachineId(), oldPurchase.getProductId());
-                log.info(String.format("Exchanging old purchase %s for new purchase %s", oldPurchase.getId(), newPurchase.getId()));
                 repository.addPurchase(newPurchase);
-                log.info("Purchase have been exchanged successfully");
                 preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId())));
             }
 
