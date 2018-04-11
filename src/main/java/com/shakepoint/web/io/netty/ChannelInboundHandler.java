@@ -144,7 +144,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     }
 
     private String createControlNumber(){
-        final String controlNumber = UUID.randomUUID().toString().replace("-", "").substring(0, 30);
+        final String controlNumber = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         log.info(controlNumber.length() + "");
         return controlNumber;
     }
