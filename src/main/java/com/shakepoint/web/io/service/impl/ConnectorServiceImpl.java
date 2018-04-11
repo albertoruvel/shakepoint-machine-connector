@@ -102,17 +102,6 @@ public class ConnectorServiceImpl implements ConnectorService {
         return Integer.parseInt(portRange.split("-")[1]);
     }
 
-    @Override
-    public Response getMachineConnectionStatus(String connectionId) throws Exception {
-        MachineConnection connection = repository.getConnectionById(connectionId);
-        if (connection == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        } else {
-            return Response.ok(new MachineConnectionStatusResponse(connection.isConnectionActive(), connection.getPort())).build();
-        }
-
-    }
-
     private ChannelFuture startConnection(NioEventLoopGroup acceptorGroup, NioEventLoopGroup handlerGroup, String machineId) throws InterruptedException {
         MachineConnection connection = repository.getConnection(machineId);
         if (connection == null) {

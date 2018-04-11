@@ -128,6 +128,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         purchase.setPurchaseDate(TransformationUtil.DATE_FORMAT.format(new Date()));
         purchase.setStatus(PurchaseStatus.PRE_AUTH);
         purchase.setQrCodeUrl(AWSS3Service.createQrCode(purchase));
+        purchase.setControlNumber(createControlNumber());
         Product p = repository.getProductById(productId);
         purchase.setTotal(p.getPrice());
         return purchase;
@@ -145,6 +146,12 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         params.put("machineId", connectionId);
         params.put("machineName", m.getName());
         emailService.sendEmail(Email.MACHINE_RECEIVED_NO_VALID_MESSAGE, technicianEmail, params);
+    }
+
+    private String createControlNumber(){
+        final String controlNumber = UUID.randomUUID().toString().replace("-", "").substring(0, 30);
+        log.info(controlNumber.length() + "");
+        return controlNumber;
     }
 
     private void processMachineMessageRequest(ChannelHandlerContext cxt, MachineMessage request) {
