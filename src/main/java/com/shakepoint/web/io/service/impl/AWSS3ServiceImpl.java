@@ -30,8 +30,7 @@ import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Hashtable;
 import java.util.Iterator;
 
@@ -64,6 +63,10 @@ public class AWSS3ServiceImpl implements AWSS3Service {
     private String nutritionalDataTmpFolder;
 
     @Inject
+    @ApplicationProperty(name = "com.shakepoint.web.rescue.qr.tmp", type = ApplicationProperty.Types.SYSTEM)
+    private String qrCodesRescueFolder;
+
+    @Inject
     private MachineConnectionRepository repository;
 
     private AmazonS3 amazonS3;
@@ -73,9 +76,8 @@ public class AWSS3ServiceImpl implements AWSS3Service {
     private final String qrCodeDataFormat = "%s_%s_%s_%s"; //purchase_machine_product_id
 
 
-
     @PostConstruct
-    public void init(){
+    public void init() {
         amazonS3 = new AmazonS3Client(new AWSCredentialsProvider() {
             public AWSCredentials getCredentials() {
                 return new BasicAWSCredentials(accessKey, secretKey);
@@ -90,10 +92,10 @@ public class AWSS3ServiceImpl implements AWSS3Service {
     @Override
     public void createProductNutritionalData(String productId) {
         File file = new File(nutritionalDataTmpFolder + File.separator + productId + ".jpg");
-        if (file.exists()){
-            String url =  uploadFile(file.getAbsolutePath(), S3ImageType.NUTRITIONAL_DATA);
+        if (file.exists()) {
+            String url = uploadFile(file, S3ImageType.NUTRITIONAL_DATA);
             repository.updateProductNutritionalDataUrl(productId, url);
-        }else{
+        } else {
             log.error("Nutritional data image not found for id " + productId);
         }
     }
@@ -128,7 +130,7 @@ public class AWSS3ServiceImpl implements AWSS3Service {
                 }
             }
             ImageIO.write(image, "png", file);
-            return uploadFile(file.getAbsolutePath(), S3ImageType.QR_CODE);
+            return uploadFile(file, S3ImageType.QR_CODE);
         } catch (WriterException e) {
             e.printStackTrace();
             return null;
@@ -140,36 +142,35 @@ public class AWSS3ServiceImpl implements AWSS3Service {
 
     public void deleteAllQrCodes() {
         log.info("Will try to delete everything on bucket...");
-        try{
+        try {
             ObjectListing objectListing = amazonS3.listObjects(qrCodeBucketName);
-            while(true){
+            while (true) {
                 for (Iterator<?> iterator =
                      objectListing.getObjectSummaries().iterator();
-                     iterator.hasNext();) {
-                    S3ObjectSummary summary = (S3ObjectSummary)iterator.next();
+                     iterator.hasNext(); ) {
+                    S3ObjectSummary summary = (S3ObjectSummary) iterator.next();
                     amazonS3.deleteObject(qrCodeBucketName, summary.getKey());
                 }
 
                 // more object_listing to retrieve?
                 if (objectListing.isTruncated()) {
-                    objectListing= amazonS3.listNextBatchOfObjects(objectListing);
+                    objectListing = amazonS3.listNextBatchOfObjects(objectListing);
                 } else {
                     break;
                 }
             }
-        }catch(Exception ex){
+        } catch (Exception ex) {
             log.error("Could not empty bucket", ex);
         }
     }
 
-    private String uploadFile(String filePath, S3ImageType imageType){
-        File  file = new File(filePath);
+    private String uploadFile(File file, S3ImageType imageType) {
         String url = null;
-        if(file.exists()){
+        if (file.exists()) {
             //choose bucket name and get fcm token
-            try{
+            try {
                 String bucketName = null;
-                switch(imageType){
+                switch (imageType) {
                     case NUTRITIONAL_DATA:
                         bucketName = nutritionalDataBucketName;
                         break;
@@ -189,22 +190,40 @@ public class AWSS3ServiceImpl implements AWSS3Service {
                 url = String.format(S3_FORMAT, bucketName, file.getName());
                 //delete tmp file
                 file.delete();
-            } catch(ArrayIndexOutOfBoundsException ex){
-                log.error(String.format("ArrayIndexOutOfBoundsException: %s", ex.getMessage()));
-            } catch(AmazonServiceException ex){
-                log.error(String.format("AmazonServiceException: %s", ex.getMessage()));
-            } catch(SdkClientException ex){
-                log.error(String.format("SdkClientException: %s", ex.getMessage()));
-            } catch(Exception ex){
+            } catch (Exception ex) {
+                if (imageType == S3ImageType.QR_CODE) {
+                    saveToRescueFolder(file);
+                }
                 log.error(ex.getMessage());
             }
-        }else{
+        } else {
             log.error(String.format("Cannot upload file to S3 service: File %s does not exists on %s", file.getAbsolutePath(), tmpFolder));
         }
         return url;
     }
 
-    public static enum S3ImageType{
+    private void saveToRescueFolder(final File file) {
+        try {
+            log.info("Saving qr code file to rescue folder");
+            File outputFile = new File(qrCodesRescueFolder + File.separator + file.getName());
+            InputStream in = new FileInputStream(file);
+            OutputStream out = new FileOutputStream(outputFile);
+            byte[] buffer = new byte[1028];
+
+            while (in.read(buffer) != -1) {
+                out.write(buffer);
+            }
+            in.close();
+            out.close();
+
+            //delete tmp file to store only on rescue folder
+            file.delete();
+        } catch (Exception ex) {
+            log.error("Could not save qr code file to rescue folder", ex);
+        }
+    }
+
+    public static enum S3ImageType {
         QR_CODE, NUTRITIONAL_DATA
     }
 }
