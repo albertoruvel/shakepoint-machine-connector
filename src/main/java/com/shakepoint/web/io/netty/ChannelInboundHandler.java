@@ -83,7 +83,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             for (Product p : availableProducts) {
                 //get needed purchases for this product on machine
                 int neededPurchases = repository.getNeededPurchasesByProductOnMachine(p.getId(), machineId, maxPrePurchases);
-                for (int j = 0; j < neededPurchases; j ++){
+                for (int j = 0; j < neededPurchases; j++) {
                     Purchase purchase = createPurchase(machineId, p.getId());
                     repository.addPurchase(purchase);
                     preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(purchase, String.valueOf(p.getEngineUseTime())));
@@ -143,9 +143,8 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         emailService.sendEmail(Email.MACHINE_RECEIVED_NO_VALID_MESSAGE, technicianEmail, params);
     }
 
-    private String createControlNumber(){
+    private String createControlNumber() {
         final String controlNumber = UUID.randomUUID().toString().replace("-", "").substring(0, 6);
-        log.info(controlNumber.length() + "");
         return controlNumber;
     }
 
@@ -217,24 +216,18 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         final Machine machine = repository.getMachine(connectionId);
         final Product product = repository.getProductById(productLevelMessage.get("productId"));
         params.put("productName", product.getName());
-        params.put("machineId", connectionId);
+        params.put("machineId", request.getMachineId());
         params.put("machineName", machine.getName());
 
-        String technicianEmail = repository.getTechnicianEmailByMachineId(connectionId);
-        if (technicianEmail == null) {
-            //If we don't have a default technician, send to admin
-            technicianEmail = System.getProperty("com.shakepoint.web.admin.user");
+
+        final List<String> emails = repository.getAdminsAndTechniciansEmails(machine.getTechnicianId());
+
+        //send emails...
+        for (String email : emails) {
+            emailService.sendEmail(Email.PRODUCT_LOW_LEVEL_ALERT, email, params);
         }
 
-        if (productLevelMessage.containsKey("productLevelType") &&
-                productLevelMessage.get("productLevelType").equals("alert")) {
-            //levels are below 30%
-            emailService.sendEmail(Email.PRODUCT_LOW_LEVEL_ALERT, technicianEmail, params);
-        } else if (productLevelMessage.containsKey("productLevelType") &&
-                productLevelMessage.get("productLevelType").equals("warning")) {
-            //levels are below 15%
-            emailService.sendEmail(Email.PRODUCT_LOW_LEVEL_CRITICAL, technicianEmail, params);
-        }
+        log.info("Product low level emails sent");
     }
 
     private void dispatchQrCodeExchangeMessageType(ChannelHandlerContext cxt, MachineMessage request) {

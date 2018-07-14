@@ -11,6 +11,9 @@ public class Machine {
     private String id;
     private String name;
 
+    @Column(name = "technician_id")
+    private String technicianId;
+
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "machine_product",
             joinColumns = @JoinColumn(name = "machine_id"),
@@ -43,5 +46,13 @@ public class Machine {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getTechnicianId() {
+        return technicianId;
+    }
+
+    public void setTechnicianId(String technicianId) {
+        this.technicianId = technicianId;
     }
 }

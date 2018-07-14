@@ -6,4 +6,6 @@ public interface AWSS3Service {
     public void createProductNutritionalData(String productId);
     public String createQrCode(Purchase qrCode);
     public void deleteAllQrCodes();
+
+    public void retryUpload(String purchaseId);
 }

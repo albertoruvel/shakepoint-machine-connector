@@ -162,6 +162,13 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     }
 
     @Override
+    public void updatePurchaseQrCodeUrl(String purchaseId, String url) {
+        em.createQuery("UPDATE Purchase p SET p.qrCodeUrl = :url WHERE p.id = :id")
+                .setParameter("url", url)
+                .setParameter("id", purchaseId).executeUpdate();
+    }
+
+    @Override
     public int getNeededPurchasesByProductOnMachine(String productId, String machineId, int maxPurchasesNumber) {
         Long currentPurchases = (Long)em.createQuery("SELECT COUNT(p.id) FROM Purchase p WHERE p.productId = :productId AND p.machineId = :machineId AND p.status = :status")
                 .setParameter("productId", productId)
@@ -169,5 +176,13 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
                 .setParameter("status", PurchaseStatus.PRE_AUTH)
                 .getSingleResult();
         return maxPurchasesNumber - currentPurchases.intValue();
+    }
+
+    @Override
+    public List<String> getAdminsAndTechniciansEmails(String technicianId) {
+        List<String> emails = em.createQuery("SELECT u.email from User u WHERE u.role = 'super-admin' OR u.id = :techId")
+                .setParameter("techId", technicianId)
+            .getResultList();
+        return emails;
     }
 }
