@@ -162,6 +162,13 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     }
 
     @Override
+    public void updatePurchaseQrCodeUrl(String purchaseId, String url) {
+        em.createQuery("UPDATE Purchase p SET p.qrCodeUrl = :url WHERE p.id = :id")
+                .setParameter("url", url)
+                .setParameter("id", purchaseId).executeUpdate();
+    }
+
+    @Override
     public int getNeededPurchasesByProductOnMachine(String productId, String machineId, int maxPurchasesNumber) {
         Long currentPurchases = (Long)em.createQuery("SELECT COUNT(p.id) FROM Purchase p WHERE p.productId = :productId AND p.machineId = :machineId AND p.status = :status")
                 .setParameter("productId", productId)

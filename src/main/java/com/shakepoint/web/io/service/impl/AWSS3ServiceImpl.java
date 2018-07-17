@@ -164,6 +164,21 @@ public class AWSS3ServiceImpl implements AWSS3Service {
         }
     }
 
+    @Override
+    public void retryUpload(String purchaseId) {
+        //get file from rescue folder
+        File file = new File(qrCodesRescueFolder + File.separator + purchaseId + ".png");
+        if (!file.exists()) {
+            log.error("Cannot retry upload for nonexistent file, purchase " + purchaseId);
+        } else {
+            final String url = uploadFile(file, S3ImageType.QR_CODE);
+            repository.updatePurchaseQrCodeUrl(purchaseId, url);
+            log.info("File upload retry went successfully");
+            //delete backup file
+            file.delete();
+        }
+    }
+
     private String uploadFile(File file, S3ImageType imageType) {
         String url = null;
         if (file.exists()) {
