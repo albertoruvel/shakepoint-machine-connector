@@ -177,4 +177,12 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
                 .getSingleResult();
         return maxPurchasesNumber - currentPurchases.intValue();
     }
+
+    @Override
+    public List<String> getAdminsAndTechniciansEmails(String technicianId) {
+        List<String> emails = em.createQuery("SELECT u.email from User u WHERE u.role = 'super-admin' OR u.id = :techId")
+                .setParameter("techId", technicianId)
+            .getResultList();
+        return emails;
+    }
 }
