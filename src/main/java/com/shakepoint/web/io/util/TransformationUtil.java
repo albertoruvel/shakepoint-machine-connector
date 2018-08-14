@@ -27,17 +27,18 @@ public class TransformationUtil {
 
         List<PreAuthPurchase> prePurchases = new ArrayList();
         for (Purchase purchase : purchases) {
-            prePurchases.add(createPreAuthPurchase(purchase, repository.getProductEngineUseTime(purchase.getProductId())));
+            Integer slotNumber = repository.getSlotNumber(purchase.getMachineId(), purchase.getProductId());
+            prePurchases.add(createPreAuthPurchase(purchase, repository.getProductEngineUseTime(purchase.getProductId()), slotNumber));
         }
         return prePurchases;
     }
 
-    public static PreAuthPurchase createPreAuthPurchase(Purchase purchase, String engineUseTime) {
+    public static PreAuthPurchase createPreAuthPurchase(Purchase purchase, String engineUseTime, Integer slotNumber) {
         try {
             Long useTime = Long.parseLong(engineUseTime);
-            return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), useTime);
+            return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), useTime, slotNumber);
         } catch (Exception ex) {
-            return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), 0L);
+            return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), 0L, slotNumber);
         }
 
     }

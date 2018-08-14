@@ -86,4 +86,6 @@ public interface MachineConnectionRepository {
     public void updatePurchaseQrCodeUrl(String purchaseId, String url);
     public int getNeededPurchasesByProductOnMachine(String productId, String machineId, int maxPurchasesNumber);
     public List<String> getAdminsAndTechniciansEmails(String technicianId);
+
+    public Integer getProductSlotNumberByMachineId(String productId, String machineId);
 }

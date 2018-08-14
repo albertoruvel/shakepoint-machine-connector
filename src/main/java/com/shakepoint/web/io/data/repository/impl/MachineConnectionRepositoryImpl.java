@@ -185,4 +185,13 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
             .getResultList();
         return emails;
     }
+
+    @Override
+    public Integer getProductSlotNumberByMachineId(String productId, String machineId) {
+        return (Integer)em.createNativeQuery("SELECT slot FROM machine_product WHERE product_id = ? AND machine_id = ?")
+                .setParameter(1, productId)
+                .setParameter(2, machineId)
+                .getSingleResult();
+
+    }
 }

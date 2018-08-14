@@ -5,8 +5,9 @@ public class PreAuthPurchase {
     private String productId;
     private String date;
     private Long engineUseTime;
+    private Integer slot;
 
-    public PreAuthPurchase(String purchaseId, String productId, String date, Long engineUseTime) {
+    public PreAuthPurchase(String purchaseId, String productId, String date, Long engineUseTime, Integer slot) {
         this.purchaseId = purchaseId;
         this.productId = productId;
         this.date = date;
@@ -43,5 +44,13 @@ public class PreAuthPurchase {
 
     public void setEngineUseTime(Long engineUseTime) {
         this.engineUseTime = engineUseTime;
+    }
+
+    public Integer getSlot() {
+        return slot;
+    }
+
+    public void setSlot(Integer slot) {
+        this.slot = slot;
     }
 }

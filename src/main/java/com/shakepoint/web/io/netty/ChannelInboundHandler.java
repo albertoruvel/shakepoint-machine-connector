@@ -86,12 +86,16 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                 for (int j = 0; j < neededPurchases; j++) {
                     Purchase purchase = createPurchase(machineId, p.getId());
                     repository.addPurchase(purchase);
-                    preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(purchase, String.valueOf(p.getEngineUseTime())));
+                    Integer slot = repository.getSlotNumber(machineId, purchase.getProductId());
+                    preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(purchase, String.valueOf(p.getEngineUseTime()), slot));
                 }
             }
             //create (maxPrePurchases - size) purchases
             preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(
                     createPurchases(machineId), repository));
+
+            //order by slot
+            preAuthPurchases.sort(Comparator.comparing(PreAuthPurchase::getSlot));
         }
 
         //create a json response
@@ -255,14 +259,19 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             if (oldPurchase == null) {
                 log.error(String.format("No purchase found with ID %s", purchaseId));
             } else {
+                //get machine id
+                MachineConnection connection = repository.getConnectionById(connectionId);
+                //get slot number
+                Integer slot = repository.getProductSlotNumberByMachineId(oldPurchase.getProductId(), connection.getMachineId());
                 //create a new purchase
                 newPurchase = createPurchase(request.getMachineId(), oldPurchase.getProductId());
                 repository.addPurchase(newPurchase);
-                preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId())));
+                preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId()), slot));
             }
 
         }
         log.info(String.format("Exchanged %d purchases for machine %s", preAuthPurchases.size(), request.getMachineId()));
+        preAuthPurchases.sort(Comparator.comparing(PreAuthPurchase::getSlot));
         return preAuthPurchases;
     }
 }
