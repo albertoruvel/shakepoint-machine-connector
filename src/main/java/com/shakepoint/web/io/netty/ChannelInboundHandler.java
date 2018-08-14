@@ -214,6 +214,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     }
 
     private void dispatchProductLowLevelMessageType(ChannelHandlerContext cxt, MachineMessage request) {
+		log.info("Received low level message from machine " + request.getMachineId());
         Map<String, String> productLevelMessage = (Map) request.getMessage();
         final Map<String, Object> params = new HashMap<String, Object>();
 
