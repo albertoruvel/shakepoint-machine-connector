@@ -261,9 +261,9 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                 log.error(String.format("No purchase found with ID %s", purchaseId));
             } else {
                 //get machine id
-                MachineConnection connection = repository.getConnectionById(connectionId);
+                MachineConnection connection = repository.getConnection(connectionId);
                 //get slot number
-                Integer slot = repository.getProductSlotNumberByMachineId(oldPurchase.getProductId(), connection.getMachineId());
+                Integer slot = repository.getSlotNumber(connection.getMachineId(), oldPurchase.getProductId());
                 //create a new purchase
                 newPurchase = createPurchase(request.getMachineId(), oldPurchase.getProductId());
                 repository.addPurchase(newPurchase);
