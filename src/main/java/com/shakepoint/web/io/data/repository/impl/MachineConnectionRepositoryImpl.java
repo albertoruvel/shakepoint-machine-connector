@@ -125,8 +125,9 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     }
 
     public void updateMachineConnectionStatus(String connectionId, boolean b) {
-        em.createQuery("UPDATE MachineConnection mc SET mc.connectionActive = :value")
+        em.createQuery("UPDATE MachineConnection mc SET mc.connectionActive = :value WHERE mc.id = :id")
                 .setParameter("value", b)
+                .setParameter("id", connectionId)
                 .executeUpdate();
     }
 
