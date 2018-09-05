@@ -62,6 +62,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             log.error("Unexpected error", cause);
             cause.printStackTrace();
         }
+        repository.updateMachineConnectionStatus(connectionId, false);
     }
 
     @Override
