@@ -274,6 +274,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         }
         log.info(String.format("Exchanged %d purchases for machine %s", preAuthPurchases.size(), request.getMachineId()));
         preAuthPurchases.sort(Comparator.comparing(PreAuthPurchase::getSlot));
+        log.info("Sorted purchases list by slot number");
         return preAuthPurchases;
     }
 }
