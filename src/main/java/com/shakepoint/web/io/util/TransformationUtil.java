@@ -28,6 +28,7 @@ public class TransformationUtil {
         List<PreAuthPurchase> prePurchases = new ArrayList();
         for (Purchase purchase : purchases) {
             Integer slotNumber = repository.getSlotNumber(purchase.getMachineId(), purchase.getProductId());
+            Logger.getLogger(TransformationUtil.class).info(String.format("Slot number for product %s: %d", purchase.getProductId(), slotNumber));
             prePurchases.add(createPreAuthPurchase(purchase, repository.getProductEngineUseTime(purchase.getProductId()), slotNumber));
         }
         return prePurchases;
