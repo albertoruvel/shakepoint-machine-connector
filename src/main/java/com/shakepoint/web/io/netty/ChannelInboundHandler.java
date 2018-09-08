@@ -94,11 +94,10 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             //create (maxPrePurchases - size) purchases
             preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(
                     createPurchases(machineId), repository));
-
-            //order by slot
-            preAuthPurchases.sort(Comparator.comparing(PreAuthPurchase::getSlot));
         }
-
+        //order by slot
+        preAuthPurchases.sort(Comparator.comparing(PreAuthPurchase::getSlot));
+        log.info("Sorted purchases by slot number");
         //create a json response
         final String json = gson.toJson(preAuthPurchases);
 
