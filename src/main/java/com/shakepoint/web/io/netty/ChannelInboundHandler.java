@@ -79,11 +79,14 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         List<Product> availableProducts = repository.getMachineAvailableProducts(request.getMachineId());
         List<PreAuthPurchase> preAuthPurchases = new ArrayList();
         if (machinePurchases.isEmpty()) {
+            log.info("Machine purchases are empty, will create new ones");
             preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(createPurchases(machineId), repository));
         } else {
+            log.info(String.format("Available purchases for machine: %d", availableProducts.size()));
             for (Product p : availableProducts) {
                 //get needed purchases for this product on machine
                 int neededPurchases = repository.getNeededPurchasesByProductOnMachine(p.getId(), machineId, maxPrePurchases);
+                log.info(String.format("will create %d purchases", neededPurchases));
                 for (int j = 0; j < neededPurchases; j++) {
                     Purchase purchase = createPurchase(machineId, p.getId());
                     repository.addPurchase(purchase);
@@ -94,7 +97,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             //create (maxPrePurchases - size) purchases
             preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(
                     createPurchases(machineId), repository));
-            preAuthPurchases.sort(Comparator.comparing(PreAuthPurchase::getSlot));
+            //preAuthPurchases.sort(Comparator.comparing(PreAuthPurchase::getSlot));
         }
         //order by slot
         log.info("Sorted purchases by slot number");
