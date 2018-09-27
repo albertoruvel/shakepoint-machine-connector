@@ -3,7 +3,9 @@ package com.shakepoint.web.io.data.entity;
 public enum PurchaseStatus {
     PRE_AUTH(199),
     AUTHORIZED(69),
+    CANCELLED(99),
     CASHED(999);
+
     int value;
 
     PurchaseStatus(int value) {

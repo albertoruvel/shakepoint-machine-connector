@@ -195,4 +195,18 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
                 .getSingleResult();
 
     }
+
+    @Override
+    public List<VendingProductStatus> getVendingProducts(String machineId) {
+        return em.createQuery("SELECT p FROM VendingProductStatus p WHERE p.machineId = :machineId")
+                .setParameter("machineId", machineId).getResultList();
+    }
+
+    @Override
+    public List<Purchase> getMachinePreAuthorizedPurchasesForProduct(String machineId, String productId) {
+        return em.createQuery("SELECT p FROM Purchase p WHERE p.machineId = :machineId AND p.productId = :productId")
+                .setParameter("machineId", machineId)
+                .setParameter("productId", productId)
+                .getResultList();
+    }
 }

@@ -88,4 +88,8 @@ public interface MachineConnectionRepository {
     public List<String> getAdminsAndTechniciansEmails(String technicianId);
 
     public Integer getProductSlotNumberByMachineId(String productId, String machineId);
+
+    public List<VendingProductStatus> getVendingProducts(String machineId);
+
+    public List<Purchase> getMachinePreAuthorizedPurchasesForProduct(String machineId, String productId);
 }

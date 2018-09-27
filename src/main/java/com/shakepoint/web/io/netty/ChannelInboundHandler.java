@@ -47,6 +47,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             request = gson.fromJson(jsonMessage, MachineMessage.class);
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
+            log.info(msg);
             dispatchNotValidMessageType(ctx, msg);
             return;
         }
@@ -177,7 +178,28 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             case PRODUCT_RECAP:
                 dispatchMachineProductRecap(cxt, request);
                 break;
+            case PRODUCTS_REPLACEMENT:
+                dispatchMachineProductsReplacement(cxt, request);
+                break;
         }
+    }
+
+    private void dispatchMachineProductsReplacement(ChannelHandlerContext cxt, MachineMessage request) {
+        //get all products for machine
+        List<VendingProductStatus> vendingProducts = repository.getVendingProducts(request.getMachineId());
+
+        //create a new list for new purchases replacements
+        List<PreAuthPurchase> newPreAuthPurchases = new ArrayList();
+        /**vendingProducts.stream().forEach(vendingProductStatus -> {
+            //check if there are any pre auth purchase on machine with this product id and machine id
+            final List<Purchase> preAuthePurchasesForProduct = repository.getMachinePreAuthorizedPurchasesForProduct(vendingProductStatus.getMachineId(), vendingProductStatus.getProductId());
+            //set all purchases as cancelled
+            preAuthePurchasesForProduct.stream().forEach(preAuthPurchase -> {
+                repository.updatePurchaseStatus(preAuthPurchase.getId(), PurchaseStatus.CANCELLED);
+            });
+            //create new purchases
+
+        });**/
     }
 
     private void dispatchMachineProductRecap(ChannelHandlerContext cxt, MachineMessage request) {
