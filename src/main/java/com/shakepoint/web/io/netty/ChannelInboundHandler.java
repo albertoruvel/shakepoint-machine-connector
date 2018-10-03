@@ -6,6 +6,7 @@ import com.shakepoint.web.io.data.dto.req.socket.MachineMessage;
 import com.shakepoint.web.io.data.dto.req.socket.MachineMessageType;
 import com.shakepoint.web.io.data.dto.res.socket.PreAuthPurchase;
 import com.shakepoint.web.io.data.dto.res.socket.ProductRecap;
+import com.shakepoint.web.io.data.dto.res.socket.RefreshedPurchase;
 import com.shakepoint.web.io.data.entity.*;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import com.shakepoint.web.io.email.Email;
@@ -18,6 +19,7 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
@@ -177,7 +179,38 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             case PRODUCT_RECAP:
                 dispatchMachineProductRecap(cxt, request);
                 break;
+            case PRODUCT_REPLACEMENT:
+                dispatchPurchasesReplacementsForMachine(cxt, request);
+                break;
         }
+    }
+
+    private void dispatchPurchasesReplacementsForMachine(ChannelHandlerContext cxt, MachineMessage request) {
+        //get machine
+        List<Purchase> preAuthorizedPurchases = repository.getPreAuthorizedPurchasesForMachine(request.getMachineId());
+
+        //get current products for machine
+        List<MachineProductStatus> currentProducts = repository.getMachineProducts(request.getMachineId());
+        List<RefreshedPurchase> purchases = new ArrayList<RefreshedPurchase>();
+        //loop through current products, search all purchases where the product is not available on machine anymore
+        currentProducts.stream().forEach(productStatus -> {
+            //check if product status exists on purchases
+            List<Purchase> existingProducts = preAuthorizedPurchases
+                    .stream().filter(purchase -> purchase.getProductId().equals(productStatus.getProductId()))
+                    .collect(Collectors.toList());
+            if (existingProducts.isEmpty()) {
+                //no pre authorized purchases with this product
+                //create N purchases for this product
+                Integer numberOfPurchasesNeeded = repository.getNeededPurchasesByProductOnMachine(productStatus.getProductId(), request.getMachineId(), maxPrePurchases);
+                for (int i = 0; i < numberOfPurchasesNeeded; i++) {
+                    Purchase purchase = createPurchase(request.getMachineId(), productStatus.getProductId());
+                    Integer slotNumber = repository.getSlotNumber(request.getMachineId(), productStatus.getProductId());
+                    repository.addPurchase(purchase);
+                    RefreshedPurchase
+                }
+            } else {
+            }
+        });
     }
 
     private void dispatchMachineProductRecap(ChannelHandlerContext cxt, MachineMessage request) {
@@ -217,7 +250,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
     }
 
     private void dispatchProductLowLevelMessageType(ChannelHandlerContext cxt, MachineMessage request) {
-		log.info("Received low level message from machine " + request.getMachineId());
+        log.info("Received low level message from machine " + request.getMachineId());
         Map<String, String> productLevelMessage = (Map) request.getMessage();
         final Map<String, Object> params = new HashMap<String, Object>();
 

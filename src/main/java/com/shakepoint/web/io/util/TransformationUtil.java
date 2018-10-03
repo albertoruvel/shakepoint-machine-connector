@@ -1,6 +1,7 @@
 package com.shakepoint.web.io.util;
 
 import com.shakepoint.web.io.data.dto.res.socket.PreAuthPurchase;
+import com.shakepoint.web.io.data.dto.res.socket.RefreshedPurchase;
 import com.shakepoint.web.io.data.entity.Machine;
 import com.shakepoint.web.io.data.entity.MachineConnection;
 import com.shakepoint.web.io.data.entity.MachineFail;
@@ -28,10 +29,15 @@ public class TransformationUtil {
         List<PreAuthPurchase> prePurchases = new ArrayList();
         for (Purchase purchase : purchases) {
             Integer slotNumber = repository.getSlotNumber(purchase.getMachineId(), purchase.getProductId());
-            Logger.getLogger(TransformationUtil.class).info(String.format("Slot number for product %s: %d", purchase.getProductId(), slotNumber));
             prePurchases.add(createPreAuthPurchase(purchase, repository.getProductEngineUseTime(purchase.getProductId()), slotNumber));
         }
         return prePurchases;
+    }
+
+    public static RefreshedPurchase createRefreshedPurchases(Purchase purchase, int slotNumber, int engineTimeUse, String refreshedPurchaseId) {
+        RefreshedPurchase refreshedPurchase = (RefreshedPurchase) createPreAuthPurchase(purchase, String.valueOf(engineTimeUse), slotNumber);
+        refreshedPurchase.setRefreshedPurchase(refreshedPurchaseId);
+        return refreshedPurchase;
     }
 
     public static PreAuthPurchase createPreAuthPurchase(Purchase purchase, String engineUseTime, Integer slotNumber) {

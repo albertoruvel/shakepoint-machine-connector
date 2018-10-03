@@ -188,11 +188,25 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     }
 
     @Override
+    public List<Purchase> getPreAuthorizedPurchasesForMachine(String machineId) {
+        return em.createQuery("SELECT p FROM Purchase p WHERE p.machineId = :machineId AND p.status = :status")
+                .setParameter("machineId", machineId)
+                .setParameter("status", PurchaseStatus.PRE_AUTH)
+                .getResultList();
+    }
+
+    @Override
     public Integer getProductSlotNumberByMachineId(String productId, String machineId) {
         return (Integer)em.createNativeQuery("SELECT slot FROM machine_product WHERE product_id = ? AND machine_id = ?")
                 .setParameter(1, productId)
                 .setParameter(2, machineId)
                 .getSingleResult();
 
+    }
+
+    @Override
+    public List<MachineProductStatus> getMachineProducts(String machineId) {
+        return em.createQuery("SELECT s FROM MachineProductStatus s WHERE s.machineId = :machineId")
+                .setParameter("machineId", machineId).getResultList();
     }
 }
