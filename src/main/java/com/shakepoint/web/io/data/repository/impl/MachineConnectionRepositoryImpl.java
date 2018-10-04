@@ -21,10 +21,15 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     private final Logger log = Logger.getLogger(getClass());
 
     public int getSlotNumber(String machineId, String productId) {
-        return (Integer) em.createNativeQuery("SELECT slot_number FROM machine_product WHERE machine_id = ? AND product_id = ?")
-                .setParameter(1, machineId)
-                .setParameter(2, productId)
-                .getSingleResult();
+        try{
+            return (Integer) em.createNativeQuery("SELECT slot_number FROM machine_product WHERE machine_id = ? AND product_id = ?")
+                    .setParameter(1, machineId)
+                    .setParameter(2, productId)
+                    .getSingleResult();
+        }catch(Exception ex) {
+            log.error(ex);
+            return 0;
+        }
     }
 
     public String getProductEngineUseTime(String productId) {

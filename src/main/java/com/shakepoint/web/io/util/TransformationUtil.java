@@ -24,22 +24,6 @@ public class TransformationUtil {
 
     private static Logger log = Logger.getLogger(TransformationUtil.class);
 
-    public static Collection<PreAuthPurchase> createPreAuthPurchases(List<Purchase> purchases, MachineConnectionRepository repository) {
-
-        List<PreAuthPurchase> prePurchases = new ArrayList();
-        for (Purchase purchase : purchases) {
-            Integer slotNumber = repository.getSlotNumber(purchase.getMachineId(), purchase.getProductId());
-            prePurchases.add(createPreAuthPurchase(purchase, repository.getProductEngineUseTime(purchase.getProductId()), slotNumber));
-        }
-        return prePurchases;
-    }
-
-    public static RefreshedPurchase createRefreshedPurchases(Purchase purchase, int slotNumber, int engineTimeUse, String refreshedPurchaseId) {
-        RefreshedPurchase refreshedPurchase = (RefreshedPurchase) createPreAuthPurchase(purchase, String.valueOf(engineTimeUse), slotNumber);
-        refreshedPurchase.setRefreshedPurchase(refreshedPurchaseId);
-        return refreshedPurchase;
-    }
-
     public static PreAuthPurchase createPreAuthPurchase(Purchase purchase, String engineUseTime, Integer slotNumber) {
         try {
             Long useTime = Long.parseLong(engineUseTime);
