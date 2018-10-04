@@ -53,4 +53,15 @@ public class PreAuthPurchase {
     public void setSlot(Integer slot) {
         this.slot = slot;
     }
+
+    @Override
+    public String toString() {
+        return "PreAuthPurchase{" +
+                "purchaseId='" + purchaseId + '\'' +
+                ", productId='" + productId + '\'' +
+                ", date='" + date + '\'' +
+                ", engineUseTime=" + engineUseTime +
+                ", slot=" + slot +
+                '}';
+    }
 }
