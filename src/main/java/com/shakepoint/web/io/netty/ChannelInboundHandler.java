@@ -66,7 +66,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         log.info(String.format("Current products id's from purchases [%s]", preAuthProductsIds));
         log.info(String.format("Current products id's from vending [%s]", currentProductsIds));
 
-        Boolean machineChanges = preAuthProductsIds.equals(currentProductsIds);
+        Boolean machineChanges = ! preAuthProductsIds.equals(currentProductsIds);
         ReplacementCheck check = new ReplacementCheck(machineChanges);
         log.info(String.format("Machine have changed: %s", machineChanges ? "No" : "Yes"));
         final String json = gson.toJson(check);
