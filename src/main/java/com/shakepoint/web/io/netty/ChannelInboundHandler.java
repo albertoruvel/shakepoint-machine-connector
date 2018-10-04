@@ -68,7 +68,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
 
         Boolean machineChanges = preAuthProductsIds.equals(currentProductsIds);
         ReplacementCheck check = new ReplacementCheck(machineChanges);
-        log.info(String.format("Machine have changed: %s", machineChanges ? "Yes" : "No"));
+        log.info(String.format("Machine have changed: %s", machineChanges ? "No" : "Yes"));
         final String json = gson.toJson(check);
         cxt.channel().writeAndFlush(json + "\n");
     }
