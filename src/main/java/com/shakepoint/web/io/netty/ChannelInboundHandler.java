@@ -116,11 +116,19 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         machinePurchases.stream().forEach(purchase -> repository.updatePurchaseStatus(purchase.getId(), PurchaseStatus.CANCELLED));
         //create new purchases
         List<MachineProductStatus> vendingProducts = repository.getMachineProducts(request.getMachineId());
+        log.info(String.format("Machine has %d registered products", vendingProducts.size()));
+        log.info("Creating purchases");
         vendingProducts.stream().forEach(status -> {
-            Purchase purchase = createPurchase(request.getMachineId(), status.getProductId());
-            repository.addPurchase(purchase);
-            preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(purchase,
-                    String.valueOf(repository.getProductById(status.getProductId()).getEngineUseTime()), status.getSlotNumber()));
+            try {
+                for (int i = 0; i < maxPrePurchases; i++) {
+                    Purchase purchase = createPurchase(request.getMachineId(), status.getProductId());
+                    repository.addPurchase(purchase);
+                    preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(purchase,
+                            String.valueOf(repository.getProductById(status.getProductId()).getEngineUseTime()), status.getSlotNumber()));
+                }
+            } catch (Exception ex) {
+                log.error(ex);
+            }
         });
         preAuthPurchases.sort(Comparator.comparing(PreAuthPurchase::getSlot));
         //create a json response
