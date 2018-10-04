@@ -12,6 +12,7 @@ public class PreAuthPurchase {
         this.productId = productId;
         this.date = date;
         this.engineUseTime = engineUseTime;
+        this.slot = slot;
     }
 
     public String getProductId() {
@@ -52,16 +53,5 @@ public class PreAuthPurchase {
 
     public void setSlot(Integer slot) {
         this.slot = slot;
-    }
-
-    @Override
-    public String toString() {
-        return "PreAuthPurchase{" +
-                "purchaseId='" + purchaseId + '\'' +
-                ", productId='" + productId + '\'' +
-                ", date='" + date + '\'' +
-                ", engineUseTime=" + engineUseTime +
-                ", slot=" + slot +
-                '}';
     }
 }
