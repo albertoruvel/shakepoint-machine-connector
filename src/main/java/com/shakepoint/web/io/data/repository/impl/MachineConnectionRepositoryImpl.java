@@ -167,6 +167,14 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
                 .setParameter("machineId", machineId).getResultList();
     }
 
+    @Override
+    public void removeCancelledPurchases(String machineId) {
+        em.createQuery("DELETE FROM Purchase p WHERE p.machineId = :machineId AND p.status = :status")
+                .setParameter("machineId", machineId)
+                .setParameter("status", PurchaseStatus.CANCELLED)
+                .executeUpdate();
+    }
+
     public List<VendingProductStatus> getVendingProducts(String machineId) {
         return em.createQuery("SELECT p FROM VendingProductStatus p WHERE p.machineId = :machineId")
                 .setParameter("machineId", machineId).getResultList();

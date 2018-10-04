@@ -67,4 +67,6 @@ public interface MachineConnectionRepository {
     public List<String> getAdminsAndTechniciansEmails(String technicianId);
     public List<Purchase> getPreAuthorizedPurchasesForMachine(String machineId);
     public List<MachineProductStatus> getMachineProducts(String machineId);
+
+    public void removeCancelledPurchases(String machineId);
 }

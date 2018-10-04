@@ -134,6 +134,9 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                 log.error(ex);
             }
         }
+        //remove cancelled purchases
+        log.info("Deleting cancelled purchases");
+        repository.removeCancelledPurchases(machineId);
         preAuthPurchases.sort(Comparator.comparingInt(PreAuthPurchase::getSlot));
         //create a json response
         final String json = gson.toJson(preAuthPurchases);
