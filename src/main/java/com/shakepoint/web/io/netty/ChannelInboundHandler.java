@@ -54,7 +54,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         List<Purchase> preAuthPurchases = repository.getPreAuthorizedPurchasesForMachine(request.getMachineId());
         //get products from purchases
         Map<String, Object> actualProducts = new HashMap<String, Object>();
-        preAuthPurchases.stream().forEach(purchase -> actualProducts.put(purchase.getId(), purchase));
+        preAuthPurchases.stream().forEach(purchase -> actualProducts.put(purchase.getProductId(), purchase));
         Map<String, Object> currentProductIds = new HashMap<String, Object>();
         currentVendingProducts.stream().forEach(status -> currentProductIds.put(status.getProductId(), status));
         //compare id's
