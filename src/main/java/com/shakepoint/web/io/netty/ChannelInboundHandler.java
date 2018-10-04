@@ -133,7 +133,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                 log.error(ex);
             }
         }
-        preAuthPurchases.sort(Comparator.comparingInt(PreAuthPurchase::getSlot));
+        //preAuthPurchases.sort(Comparator.comparingInt(PreAuthPurchase::getSlot));
         //create a json response
         final String json = gson.toJson(preAuthPurchases);
 
