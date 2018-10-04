@@ -118,7 +118,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         List<MachineProductStatus> vendingProducts = repository.getMachineProducts(request.getMachineId());
         log.info(String.format("Machine has %d registered products", vendingProducts.size()));
         log.info("Creating purchases");
-        vendingProducts.stream().forEach(status -> {
+        for (MachineProductStatus status : vendingProducts) {
             try {
                 for (int i = 0; i < maxPrePurchases; i++) {
                     Purchase purchase = createPurchase(request.getMachineId(), status.getProductId());
@@ -133,7 +133,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             } catch (Exception ex) {
                 log.error(ex);
             }
-        });
+        }
         preAuthPurchases.sort(Comparator.comparing(PreAuthPurchase::getSlot));
         //create a json response
         final String json = gson.toJson(preAuthPurchases);
