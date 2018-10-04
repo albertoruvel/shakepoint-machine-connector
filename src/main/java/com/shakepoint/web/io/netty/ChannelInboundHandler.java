@@ -124,7 +124,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                     Purchase purchase = createPurchase(request.getMachineId(), status.getProductId());
                     repository.addPurchase(purchase);
                     preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(purchase,
-                            String.valueOf(repository.getProductById(status.getProductId()).getEngineUseTime()), status.getSlotNumber()));
+                            String.valueOf(repository.getProductById(status.getProductId()).getEngineUseTime()), repository.getSlotNumber(request.getMachineId(), status.getProductId())));
                 }
             } catch (Exception ex) {
                 log.error(ex);
