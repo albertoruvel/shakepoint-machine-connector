@@ -6,7 +6,7 @@ import com.shakepoint.web.io.data.dto.req.socket.MachineMessage;
 import com.shakepoint.web.io.data.dto.req.socket.MachineMessageType;
 import com.shakepoint.web.io.data.dto.res.socket.PreAuthPurchase;
 import com.shakepoint.web.io.data.dto.res.socket.ProductRecap;
-import com.shakepoint.web.io.data.dto.res.socket.RefreshedPurchase;
+import com.shakepoint.web.io.data.dto.res.socket.ReplacementCheck;
 import com.shakepoint.web.io.data.entity.*;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import com.shakepoint.web.io.email.Email;
@@ -18,7 +18,14 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -41,6 +48,31 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         this.emailService = emailService;
     }
 
+    private void dispatchPurchasesReplacementsForMachine(ChannelHandlerContext cxt, MachineMessage request) {
+        //get purchases where there are no more products registered
+        List<MachineProductStatus> currentVendingProducts = repository.getMachineProducts(request.getMachineId());
+        List<Purchase> preAuthPurchases = repository.getPreAuthorizedPurchasesForMachine(request.getMachineId());
+        //get products from purchases
+        Map<String, Object> actualProducts = new HashMap<String, Object>();
+        preAuthPurchases.stream().forEach(purchase -> actualProducts.put(purchase.getId(), purchase));
+        Map<String, Object> currentProductIds = new HashMap<String, Object>();
+        currentVendingProducts.stream().forEach(status -> currentProductIds.put(status.getProductId(), status));
+        //compare id's
+        List<String> preAuthProductsIds = actualProducts.keySet().stream().collect(Collectors.toList());
+        List<String> currentProductsIds = currentProductIds.keySet().stream().collect(Collectors.toList());
+        //sort them
+        Collections.sort(preAuthProductsIds, Comparator.comparing(String::toString));
+        Collections.sort(currentProductsIds, Comparator.comparing(String::toString));
+        log.info(String.format("Current products id's from purchases [%s]", preAuthProductsIds));
+        log.info(String.format("Current products id's from vending [%s]", currentProductsIds));
+
+        Boolean machineChanges = preAuthProductsIds.equals(currentProductsIds);
+        ReplacementCheck check = new ReplacementCheck(machineChanges);
+        log.info(String.format("Machine have changed: %s", machineChanges ? "Yes" : "No"));
+        final String json = gson.toJson(check);
+        cxt.channel().writeAndFlush(json + "\n");
+    }
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         MachineMessage request = null;
@@ -49,6 +81,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             request = gson.fromJson(jsonMessage, MachineMessage.class);
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
+            log.info(msg);
             dispatchNotValidMessageType(ctx, msg);
             return;
         }
@@ -75,54 +108,26 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
 
     private void dispatchTurnOnMessage(ChannelHandlerContext cxt, MachineMessage request) {
         final String machineId = request.getMachineId();
-
+        log.info(String.format("Got turn on message from machine %s", request.getMachineId()));
         //check for existing purchases with status pre_auth
         List<Purchase> machinePurchases = repository.getMachinePreAuthorizedPurchases(machineId);
-        List<Product> availableProducts = repository.getMachineAvailableProducts(request.getMachineId());
         List<PreAuthPurchase> preAuthPurchases = new ArrayList();
-        if (machinePurchases.isEmpty()) {
-            log.info("Machine purchases are empty, will create new ones");
-            preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(createPurchases(machineId), repository));
-        } else {
-            log.info(String.format("Available purchases for machine: %d", availableProducts.size()));
-            for (Product p : availableProducts) {
-                //get needed purchases for this product on machine
-                int neededPurchases = repository.getNeededPurchasesByProductOnMachine(p.getId(), machineId, maxPrePurchases);
-                log.info(String.format("will create %d purchases", neededPurchases));
-                for (int j = 0; j < neededPurchases; j++) {
-                    Purchase purchase = createPurchase(machineId, p.getId());
-                    repository.addPurchase(purchase);
-                    Integer slot = repository.getSlotNumber(machineId, purchase.getProductId());
-                    preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(purchase, String.valueOf(p.getEngineUseTime()), slot));
-                }
-            }
-            //create (maxPrePurchases - size) purchases
-            preAuthPurchases.addAll(TransformationUtil.createPreAuthPurchases(
-                    createPurchases(machineId), repository));
-            //preAuthPurchases.sort(Comparator.comparing(PreAuthPurchase::getSlot));
-        }
-        //order by slot
-        log.info("Sorted purchases by slot number");
+        log.info("Cancelling purchases");
+        machinePurchases.stream().forEach(purchase -> repository.updatePurchaseStatus(purchase.getId(), PurchaseStatus.CANCELLED));
+        //create new purchases
+        List<MachineProductStatus> vendingProducts = repository.getMachineProducts(request.getMachineId());
+        vendingProducts.stream().forEach(status -> {
+            Purchase purchase = createPurchase(request.getMachineId(), status.getProductId());
+            repository.addPurchase(purchase);
+            preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(purchase,
+                    String.valueOf(repository.getProductById(status.getProductId()).getEngineUseTime()), status.getSlotNumber()));
+        });
+        preAuthPurchases.sort(Comparator.comparing(PreAuthPurchase::getSlot));
         //create a json response
         final String json = gson.toJson(preAuthPurchases);
 
         log.info("Sending pre authorized codes to client " + connectionId);
         cxt.channel().writeAndFlush(json + "\n");
-    }
-
-    private List<Purchase> createPurchases(String machineId) {
-        //get products for machine
-        List<Product> products = repository.getMachineAvailableProducts(machineId);
-        List<Purchase> purchases = new ArrayList();
-        Purchase purchase;
-        for (Product p : products) {
-            for (int j = 0; j < maxPrePurchases; j++) {
-                purchase = createPurchase(machineId, p.getId());
-                repository.addPurchase(purchase);
-                purchases.add(purchase);
-            }
-        }
-        return purchases;
     }
 
     private Purchase createPurchase(String machineId, String productId) {
@@ -183,34 +188,6 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                 dispatchPurchasesReplacementsForMachine(cxt, request);
                 break;
         }
-    }
-
-    private void dispatchPurchasesReplacementsForMachine(ChannelHandlerContext cxt, MachineMessage request) {
-        //get machine
-        List<Purchase> preAuthorizedPurchases = repository.getPreAuthorizedPurchasesForMachine(request.getMachineId());
-
-        //get current products for machine
-        List<MachineProductStatus> currentProducts = repository.getMachineProducts(request.getMachineId());
-        List<RefreshedPurchase> purchases = new ArrayList<RefreshedPurchase>();
-        //loop through current products, search all purchases where the product is not available on machine anymore
-        currentProducts.stream().forEach(productStatus -> {
-            //check if product status exists on purchases
-            List<Purchase> existingProducts = preAuthorizedPurchases
-                    .stream().filter(purchase -> purchase.getProductId().equals(productStatus.getProductId()))
-                    .collect(Collectors.toList());
-            if (existingProducts.isEmpty()) {
-                //no pre authorized purchases with this product
-                //create N purchases for this product
-                Integer numberOfPurchasesNeeded = repository.getNeededPurchasesByProductOnMachine(productStatus.getProductId(), request.getMachineId(), maxPrePurchases);
-                for (int i = 0; i < numberOfPurchasesNeeded; i++) {
-                    Purchase purchase = createPurchase(request.getMachineId(), productStatus.getProductId());
-                    Integer slotNumber = repository.getSlotNumber(request.getMachineId(), productStatus.getProductId());
-                    repository.addPurchase(purchase);
-                    RefreshedPurchase
-                }
-            } else {
-            }
-        });
     }
 
     private void dispatchMachineProductRecap(ChannelHandlerContext cxt, MachineMessage request) {

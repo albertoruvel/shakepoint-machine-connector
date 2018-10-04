@@ -22,13 +22,6 @@ public interface MachineConnectionRepository {
     public MachineConnection getConnection(String machineId);
 
     /**
-     * Get a connection using an id
-     * @param id
-     * @return
-     */
-    public MachineConnection getConnectionById(String id);
-
-    /**
      * Create a new machine connection if not exists
      * @param connection
      */
@@ -48,23 +41,10 @@ public interface MachineConnectionRepository {
     public List<Purchase> getMachinePreAuthorizedPurchases(String machineId);
 
     /**
-     * Get a machine available products
-     * @param machineId
-     * @return
-     */
-    public List<Product> getMachineAvailableProducts(String machineId);
-
-    /**
      * create a purchase
      * @param purchase
      */
     public void addPurchase(Purchase purchase);
-
-    /**
-     * remove all pre authorized purchases for a machine
-     * @param machineId
-     */
-    public int removePreAuthorizedPurchases(String machineId);
 
     /**
      * Updates a purchase status using purchase ID
@@ -84,11 +64,7 @@ public interface MachineConnectionRepository {
     Product getProductById(String id);
     public void updateProductNutritionalDataUrl(String productId, String url);
     public void updatePurchaseQrCodeUrl(String purchaseId, String url);
-    public int getNeededPurchasesByProductOnMachine(String productId, String machineId, int maxPurchasesNumber);
     public List<String> getAdminsAndTechniciansEmails(String technicianId);
     public List<Purchase> getPreAuthorizedPurchasesForMachine(String machineId);
-
-    public Integer getProductSlotNumberByMachineId(String productId, String machineId);
-
     public List<MachineProductStatus> getMachineProducts(String machineId);
 }

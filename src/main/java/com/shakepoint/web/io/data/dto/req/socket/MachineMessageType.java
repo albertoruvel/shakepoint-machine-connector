@@ -6,6 +6,7 @@ public enum MachineMessageType {
     QR_CODE_EXCHANGE("qr_code_exchange"),
     PRODUCT_LEVEL_ALERT("product_level_alert"),
     MACHINE_FAIL("machine_fail"),
+    PRODUCTS_REPLACEMENT("replacement"),
     PRODUCT_RECAP("product_recap"),
     PRODUCT_REPLACEMENT("replacement"),
     NOT_VALID("");
@@ -29,8 +30,15 @@ public enum MachineMessageType {
             return MACHINE_FAIL;
         } else if (value.equals(PRODUCT_RECAP.value)) {
             return PRODUCT_RECAP;
+<<<<<<< HEAD
         } else if (value.equals(PRODUCT_REPLACEMENT.value)) {
             return PRODUCT_REPLACEMENT;
         } else return NOT_VALID;
+=======
+        } else if (value.equals(PRODUCTS_REPLACEMENT.value)) {
+            return PRODUCTS_REPLACEMENT;
+        }
+        else return NOT_VALID;
+>>>>>>> 09823c258fda24693b559321305ff73b8628a2da
     }
 }

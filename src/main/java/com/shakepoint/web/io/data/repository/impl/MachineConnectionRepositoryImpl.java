@@ -2,11 +2,9 @@ package com.shakepoint.web.io.data.repository.impl;
 
 import com.shakepoint.web.io.data.entity.*;
 import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
-import com.shakepoint.web.io.service.AWSS3Service;
 import org.apache.log4j.Logger;
 
 import javax.ejb.Stateless;
-import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -20,20 +18,17 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     @PersistenceContext
     private EntityManager em;
 
-    @Inject
-    private AWSS3Service AWSS3Service;
-
     private final Logger log = Logger.getLogger(getClass());
 
     public int getSlotNumber(String machineId, String productId) {
-        return (Integer)em.createNativeQuery("SELECT slot_number FROM machine_product WHERE machine_id = ? AND product_id = ?")
+        return (Integer) em.createNativeQuery("SELECT slot_number FROM machine_product WHERE machine_id = ? AND product_id = ?")
                 .setParameter(1, machineId)
                 .setParameter(2, productId)
                 .getSingleResult();
     }
 
     public String getProductEngineUseTime(String productId) {
-        Integer use =  (Integer)em.createQuery("SELECT p.engineUseTime FROM Product p WHERE p.id = :id")
+        Integer use = (Integer) em.createQuery("SELECT p.engineUseTime FROM Product p WHERE p.id = :id")
                 .setParameter("id", productId)
                 .getSingleResult();
         return use.toString();
@@ -54,16 +49,6 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
         try {
             return (MachineConnection) em.createQuery("SELECT mc FROM MachineConnection mc WHERE mc.machineId = :id")
                     .setParameter("id", machineId).getSingleResult();
-        } catch (NoResultException ex) {
-            return null;
-        }
-    }
-
-    public MachineConnection getConnectionById(String id) {
-        try {
-            return (MachineConnection) em.createQuery("SELECT mc FROM MachineConnection mc WHERE mc.id = :id")
-                    .setParameter("id", id)
-                    .getSingleResult();
         } catch (NoResultException ex) {
             return null;
         }
@@ -90,22 +75,8 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
                 .getResultList();
     }
 
-    public List<Product> getMachineAvailableProducts(String machineId) {
-        return em.createQuery("SELECT m.products FROM Machine m WHERE m.id = :machineId")
-                .setParameter("machineId", machineId).getResultList();
-    }
-
     public void addPurchase(Purchase purchase) {
         em.persist(purchase);
-    }
-
-    public int removePreAuthorizedPurchases(String machineId) {
-        List<Purchase> machinePurchases = getMachinePreAuthorizedPurchases(machineId);
-        for (Purchase purchase : machinePurchases) {
-
-            em.merge(purchase);
-        }
-        return machinePurchases.size();
     }
 
     public void updatePurchaseStatus(String purchaseId, PurchaseStatus cashed) {
@@ -136,22 +107,22 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     }
 
     public Machine getMachine(String id) {
-        try{
-            return (Machine)em.createQuery("SELECT m FROM Machine m WHERE m.id = :id")
+        try {
+            return (Machine) em.createQuery("SELECT m FROM Machine m WHERE m.id = :id")
                     .setParameter("id", id)
                     .getSingleResult();
-        }catch(NoResultException ex){
+        } catch (NoResultException ex) {
             return null;
         }
     }
 
-    public String getTechnicianEmailByMachineId(final String machineId){
+    public String getTechnicianEmailByMachineId(final String machineId) {
         Query query = em.createNativeQuery("select distinct u.email from machine m inner join user u on u.id = m.technician_id  where m.id = :machineId");
         query.setParameter("machineId", machineId);
-        return (String)query.getSingleResult();
+        return (String) query.getSingleResult();
     }
 
-    public Product getProductById(String id){
+    public Product getProductById(String id) {
         return em.find(Product.class, id);
     }
 
@@ -170,20 +141,10 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     }
 
     @Override
-    public int getNeededPurchasesByProductOnMachine(String productId, String machineId, int maxPurchasesNumber) {
-        Long currentPurchases = (Long)em.createQuery("SELECT COUNT(p.id) FROM Purchase p WHERE p.productId = :productId AND p.machineId = :machineId AND p.status = :status")
-                .setParameter("productId", productId)
-                .setParameter("machineId", machineId)
-                .setParameter("status", PurchaseStatus.PRE_AUTH)
-                .getSingleResult();
-        return maxPurchasesNumber - currentPurchases.intValue();
-    }
-
-    @Override
     public List<String> getAdminsAndTechniciansEmails(String technicianId) {
         List<String> emails = em.createQuery("SELECT u.email from User u WHERE u.role = 'super-admin' OR u.id = :techId")
                 .setParameter("techId", technicianId)
-            .getResultList();
+                .getResultList();
         return emails;
     }
 
@@ -196,17 +157,14 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
     }
 
     @Override
-    public Integer getProductSlotNumberByMachineId(String productId, String machineId) {
-        return (Integer)em.createNativeQuery("SELECT slot FROM machine_product WHERE product_id = ? AND machine_id = ?")
-                .setParameter(1, productId)
-                .setParameter(2, machineId)
-                .getSingleResult();
-
-    }
-
-    @Override
     public List<MachineProductStatus> getMachineProducts(String machineId) {
         return em.createQuery("SELECT s FROM MachineProductStatus s WHERE s.machineId = :machineId")
                 .setParameter("machineId", machineId).getResultList();
     }
+
+    public List<VendingProductStatus> getVendingProducts(String machineId) {
+        return em.createQuery("SELECT p FROM VendingProductStatus p WHERE p.machineId = :machineId")
+                .setParameter("machineId", machineId).getResultList();
+    }
+
 }
