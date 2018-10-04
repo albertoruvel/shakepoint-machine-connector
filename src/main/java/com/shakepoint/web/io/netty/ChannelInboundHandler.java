@@ -70,6 +70,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         ReplacementCheck check = new ReplacementCheck(machineChanges);
         log.info(String.format("Machine have changed: %s", machineChanges ? "No" : "Yes"));
         final String json = gson.toJson(check);
+        log.info(json);
         cxt.channel().writeAndFlush(json + "\n");
     }
 
