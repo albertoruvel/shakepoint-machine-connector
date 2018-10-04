@@ -29,6 +29,7 @@ public class TransformationUtil {
             Long useTime = Long.parseLong(engineUseTime);
             return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), useTime, slotNumber);
         } catch (Exception ex) {
+            log.error(ex);
             return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), 0L, slotNumber);
         }
 
