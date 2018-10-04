@@ -163,7 +163,7 @@ public class MachineConnectionRepositoryImpl implements MachineConnectionReposit
 
     @Override
     public List<MachineProductStatus> getMachineProducts(String machineId) {
-        return em.createQuery("SELECT s FROM MachineProductStatus s WHERE s.machineId = :machineId ORDER BY s.slotNumber DESC")
+        return em.createQuery("SELECT s FROM MachineProductStatus s WHERE s.machineId = :machineId ORDER BY s.slotNumber ASC")
                 .setParameter("machineId", machineId).getResultList();
     }
 
