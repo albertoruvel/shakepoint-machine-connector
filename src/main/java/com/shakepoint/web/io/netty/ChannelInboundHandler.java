@@ -54,7 +54,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         List<Purchase> preAuthPurchases = repository.getPreAuthorizedPurchasesForMachine(request.getMachineId());
         //get products from purchases
         Map<String, Object> actualProducts = new HashMap<String, Object>();
-        preAuthPurchases.stream().forEach(purchase -> actualProducts.put(purchase.getId(), purchase));
+        preAuthPurchases.stream().forEach(purchase -> actualProducts.put(purchase.getProductId(), purchase));
         Map<String, Object> currentProductIds = new HashMap<String, Object>();
         currentVendingProducts.stream().forEach(status -> currentProductIds.put(status.getProductId(), status));
         //compare id's
@@ -66,10 +66,11 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         log.info(String.format("Current products id's from purchases [%s]", preAuthProductsIds));
         log.info(String.format("Current products id's from vending [%s]", currentProductsIds));
 
-        Boolean machineChanges = preAuthProductsIds.equals(currentProductsIds);
+        Boolean machineChanges = ! preAuthProductsIds.equals(currentProductsIds);
         ReplacementCheck check = new ReplacementCheck(machineChanges);
-        log.info(String.format("Machine have changed: %s", machineChanges ? "Yes" : "No"));
+        log.info(String.format("Machine have changed: %s", machineChanges ? "No" : "Yes"));
         final String json = gson.toJson(check);
+        log.info(json);
         cxt.channel().writeAndFlush(json + "\n");
     }
 
@@ -133,11 +134,12 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                 log.error(ex);
             }
         }
-        //preAuthPurchases.sort(Comparator.comparingInt(PreAuthPurchase::getSlot));
+        //remove cancelled purchases
+        log.info("Deleting cancelled purchases");
+        repository.removeCancelledPurchases(machineId);
+        preAuthPurchases.sort(Comparator.comparingInt(PreAuthPurchase::getSlot));
         //create a json response
         final String json = gson.toJson(preAuthPurchases);
-
-        log.info("Sending pre authorized codes to client " + connectionId);
         cxt.channel().writeAndFlush(json + "\n");
     }
 
