@@ -126,7 +126,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                     Product product = repository.getProductById(status.getProductId());
                     Integer slotNumber = repository.getSlotNumber(request.getMachineId(), status.getProductId());
                     PreAuthPurchase preAuthPurchase = TransformationUtil.createPreAuthPurchase(purchase,
-                            String.valueOf(product.getEngineUseTime()), slotNumber);
+                            String.valueOf(product.getEngineUseTime()), slotNumber, product.getMixTime());
                     preAuthPurchases.add(preAuthPurchase);
                 }
             } catch (Exception ex) {
@@ -291,7 +291,9 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                 //create a new purchase
                 newPurchase = createPurchase(request.getMachineId(), oldPurchase.getProductId());
                 repository.addPurchase(newPurchase);
-                preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId()), slot));
+                //get product
+                Product product = repository.getProductById(newPurchase.getProductId());
+                preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId()), slot, product.getMixTime()));
             }
 
         }
