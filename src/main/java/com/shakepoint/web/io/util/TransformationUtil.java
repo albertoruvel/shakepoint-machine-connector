@@ -1,17 +1,17 @@
 package com.shakepoint.web.io.util;
 
 import com.shakepoint.web.io.data.dto.res.socket.PreAuthPurchase;
-import com.shakepoint.web.io.data.dto.res.socket.RefreshedPurchase;
 import com.shakepoint.web.io.data.entity.Machine;
 import com.shakepoint.web.io.data.entity.MachineConnection;
 import com.shakepoint.web.io.data.entity.MachineFail;
 import com.shakepoint.web.io.data.entity.Purchase;
-import com.shakepoint.web.io.data.repository.MachineConnectionRepository;
 import org.apache.log4j.Logger;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.TimeZone;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class TransformationUtil {
