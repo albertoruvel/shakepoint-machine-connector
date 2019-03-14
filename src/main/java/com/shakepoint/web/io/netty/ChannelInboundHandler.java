@@ -113,7 +113,6 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
         //check for existing purchases with status pre_auth
         List<Purchase> machinePurchases = repository.getMachinePreAuthorizedPurchases(machineId);
         List<PreAuthPurchase> preAuthPurchases = new ArrayList();
-        log.info("Cancelling purchases");
         machinePurchases.stream().forEach(purchase -> repository.updatePurchaseStatus(purchase.getId(), PurchaseStatus.CANCELLED));
         //create new purchases
         List<MachineProductStatus> vendingProducts = repository.getMachineProducts(request.getMachineId());
@@ -123,6 +122,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
             try {
                 for (int i = 0; i < maxPrePurchases; i++) {
                     Purchase purchase = createPurchase(request.getMachineId(), status.getProductId());
+                    log.info(String.format("Created purchase with ID: " + purchase.getId()));
                     repository.addPurchase(purchase);
                     Product product = repository.getProductById(status.getProductId());
                     Integer slotNumber = repository.getSlotNumber(request.getMachineId(), status.getProductId());
@@ -293,7 +293,9 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<String> {
                 //create a new purchase
                 newPurchase = createPurchase(request.getMachineId(), oldPurchase.getProductId());
                 repository.addPurchase(newPurchase);
-                preAuthPurchases.add(TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId()), slot));
+                PreAuthPurchase purchase = TransformationUtil.createPreAuthPurchase(newPurchase, repository.getProductEngineUseTime(newPurchase.getProductId()), slot);
+                preAuthPurchases.add(purchase);
+                log.info(String.format("Exchanged purchase with ID %s at %s", newPurchase.getId(), TransformationUtil.DATE_FORMAT.format(new Date())));
             }
 
         }
