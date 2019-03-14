@@ -24,13 +24,13 @@ public class TransformationUtil {
 
     private static Logger log = Logger.getLogger(TransformationUtil.class);
 
-    public static PreAuthPurchase createPreAuthPurchase(Purchase purchase, String engineUseTime, Integer slotNumber) {
+    public static PreAuthPurchase createPreAuthPurchase(Purchase purchase, String engineUseTime, Integer slotNumber, Integer mixTime) {
         try {
             Long useTime = Long.parseLong(engineUseTime);
-            return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), useTime, slotNumber);
+            return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), useTime, slotNumber, mixTime);
         } catch (Exception ex) {
             log.error(ex);
-            return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), 0L, slotNumber);
+            return new PreAuthPurchase(purchase.getId(), purchase.getProductId(), purchase.getPurchaseDate(), 0L, slotNumber, mixTime);
         }
 
     }

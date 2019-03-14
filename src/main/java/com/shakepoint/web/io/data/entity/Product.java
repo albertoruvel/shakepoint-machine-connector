@@ -15,6 +15,9 @@ public class Product {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "mix_time")
+    private Integer mixTime;
+
     @Column(name = "price")
     private Double price;
 
@@ -76,5 +79,13 @@ public class Product {
 
     public void setNutritionalDataUrl(String nutritionalDataUrl) {
         this.nutritionalDataUrl = nutritionalDataUrl;
+    }
+
+    public Integer getMixTime() {
+        return mixTime;
+    }
+
+    public void setMixTime(Integer mixTime) {
+        this.mixTime = mixTime;
     }
 }

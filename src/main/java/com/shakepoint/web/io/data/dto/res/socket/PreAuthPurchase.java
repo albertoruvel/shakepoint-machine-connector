@@ -6,13 +6,15 @@ public class PreAuthPurchase {
     private String date;
     private Long engineUseTime;
     private Integer slot;
+    private Integer mixTime;
 
-    public PreAuthPurchase(String purchaseId, String productId, String date, Long engineUseTime, Integer slot) {
+    public PreAuthPurchase(String purchaseId, String productId, String date, Long engineUseTime, Integer slot, Integer mixTime) {
         this.purchaseId = purchaseId;
         this.productId = productId;
         this.date = date;
         this.engineUseTime = engineUseTime;
         this.slot = slot;
+        this.mixTime = mixTime;
     }
 
     public String getProductId() {
@@ -53,5 +55,13 @@ public class PreAuthPurchase {
 
     public void setSlot(Integer slot) {
         this.slot = slot;
+    }
+
+    public Integer getMixTime() {
+        return mixTime;
+    }
+
+    public void setMixTime(Integer mixTime) {
+        this.mixTime = mixTime;
     }
 }
